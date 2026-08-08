@@ -1,0 +1,38 @@
+{
+  "name": "nextjs",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "push": "git add . && git commit -m 'quick update' && git push"
+  },
+  "dependencies": {
+    "@phosphor-icons/react": "^2.1.10",
+    "@types/ping": "^0.4.4",
+    "exceljs": "^4.4.0",
+    "file-saver": "^2.0.5",
+    "html5-qrcode": "^2.3.8",
+    "mysql2": "^3.20.0",
+    "next": "16.1.6",
+    "next-themes": "^0.4.6",
+    "pg": "^8.20.0",
+    "ping": "^1.0.0",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "recharts": "^3.8.1",
+    "sonner": "^2.0.7"
+  },
+  "devDependencies": {
+    "@types/file-saver": "^2.0.7",
+    "@types/node": "^20",
+    "@types/pg": "^8.18.0",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.1.6",
+    "typescript": "^5"
+  }
+}
