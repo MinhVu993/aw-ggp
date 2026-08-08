@@ -36,7 +36,8 @@ import RejectModal from "./components/RejectModal";
 import ConfirmModal, { ConfirmModalState } from "./components/ConfirmModal";
 import DetailRequestDrawer from "./components/DetailRequestDrawer";
 import CreateRequestDrawer from "./components/CreateRequestDrawer";
-
+import ActionDropdown from "./components/ActionDropdown";
+import PrintTemplate from "./components/PrintTemplate";
 
 
 function RequestsPageContent() {
@@ -72,6 +73,14 @@ function RequestsPageContent() {
   const [rejectReason, setRejectReason] = useState("");
   const [showRejectForm, setShowRejectForm] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
+  const [printRequest, setPrintRequest] = useState<RequestItem | null>(null);
+
+  const handlePrint = (request: RequestItem) => {
+    setPrintRequest(request);
+    setTimeout(() => {
+      window.print();
+    }, 100);
+  };
 
   // Form states (Create Request)
   const [formTitle, setFormTitle] = useState("");
@@ -1601,75 +1610,16 @@ function RequestsPageContent() {
                   </td>
                   <td style={{ textAlign: "right" }}>
                     <div style={{ display: "flex", gap: "0.5rem", justifyContent: "flex-end" }}>
-                      {user && isUserApprover(item, user) && item.status === 1 ? (
-                        <>
-                          <button
-                            className={styles.btnSuccess}
-                            style={{ padding: "0.375rem 0.75rem", fontSize: "0.75rem", display: "flex", alignItems: "center", gap: "0.25rem" }}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDirectApprove(item.id);
-                            }}
-                          >
-                            <Check size={14} weight="bold" />
-                            <span>{t("btn_approve")}</span>
-                          </button>
-                          <button
-                            className={styles.btnDanger}
-                            style={{ padding: "0.375rem 0.75rem", fontSize: "0.75rem", display: "flex", alignItems: "center", gap: "0.25rem" }}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDirectReject(item.id);
-                            }}
-                          >
-                            <X size={14} weight="bold" />
-                            <span>{t("btn_reject")}</span>
-                          </button>
-                        </>
-                      ) : (
-                        <>
-                          <button
-                            className={styles.btnOutline}
-                            style={{ padding: "0.375rem 0.75rem", fontSize: "0.75rem", display: "flex", alignItems: "center", gap: "0.25rem" }}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleViewDetails(item);
-                            }}
-                          >
-                            <ClipboardText size={14} />
-                            <span>{t("details")}</span>
-                          </button>
-                          {item.endDate && new Date(item.endDate) < new Date() && (
-                            item.renewedToCode ? (
-                              <span style={{ 
-                                fontSize: "0.75rem", 
-                                color: "var(--text-secondary)", 
-                                padding: "0.375rem 0.75rem", 
-                                border: "1px dashed var(--glass-border)",
-                                borderRadius: "2px",
-                                display: "inline-flex",
-                                alignItems: "center",
-                                gap: "0.25rem"
-                              }}>
-                                <Check size={12} weight="bold" color="#10b981" />
-                                {t("renewed_by") || "Đã gia hạn bởi"} {item.renewedToCode}
-                              </span>
-                            ) : (
-                              <button
-                                className={styles.btnOutline}
-                                style={{ padding: "0.375rem 0.75rem", fontSize: "0.75rem", display: "flex", alignItems: "center", gap: "0.25rem", color: "var(--accent-primary)", borderColor: "var(--accent-primary)" }}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleRenewRequest(item);
-                                }}
-                              >
-                                <Copy size={14} weight="bold" />
-                                <span>{t("renew") || "Gia hạn"}</span>
-                              </button>
-                            )
-                          )}
-                        </>
-                      )}
+                      <ActionDropdown 
+                        item={item}
+                        canApprove={!!(user && isUserApprover(item, user))}
+                        onApprove={handleDirectApprove}
+                        onReject={handleDirectReject}
+                        onDetail={handleViewDetails}
+                        onRenew={handleRenewRequest}
+                        onPrint={handlePrint}
+                        t={t}
+                      />
                     </div>
                   </td>
                 </tr>
@@ -1743,12 +1693,14 @@ function RequestsPageContent() {
         t={t}
       />
 
-      {/* ── Confirm Modal ── */}
       <ConfirmModal
         modal={confirmModal}
         setModal={setConfirmModal}
         t={t}
       />
+
+      {/* ── Print Template ── */}
+      <PrintTemplate request={printRequest} id="print-section" />
     </main>
   );
 }

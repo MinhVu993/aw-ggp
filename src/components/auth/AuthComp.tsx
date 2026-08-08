@@ -51,6 +51,48 @@ const AuthComp = ({
             console.error("Error parsing app_roles", e);
         }
 
+        // --- Bổ sung: Gọi API gmo021 IFM Tracking ---
+        let queryParams = new URLSearchParams({ location: 'vg' });
+        let hasQueryParam = false;
+        
+        if (userData.group_empno) {
+            queryParams.append('group_empno', userData.group_empno);
+            hasQueryParam = true;
+        } else if (userData.syno_username || userData.syno_user) {
+            queryParams.append('ad', userData.syno_username || userData.syno_user);
+            hasQueryParam = true;
+        } else if (userData.empno) {
+            queryParams.append('empno', userData.empno);
+            hasQueryParam = true;
+        }
+
+        let enhancedDept = userData.dept || "";
+        let enhancedHighDept = userData.high_dept || userData.hight_dept || "";
+        let enhancedName = userData.name || "";
+        let enhancedEmail = userData.email || "";
+        let enhancedGroupEmpno = userData.group_empno;
+        let enhancedSynoUser = userData.syno_username || userData.syno_user;
+        let enhancedEmpno = userData.empno;
+        
+        if (hasQueryParam && (queryParams.has('group_empno') || queryParams.has('ad'))) {
+            try {
+                const res = await fetch(`http://gmo021.cansportsvg.com:10003/api/ifm-tracking/managers/query?${queryParams.toString()}`);
+                const data = await res.json();
+                if (data && data.ok && data.manager) {
+                    const manager = data.manager;
+                    enhancedDept = manager.user_dept_names || enhancedDept;
+                    enhancedHighDept = manager.user_division_names || enhancedHighDept;
+                    enhancedName = manager.full_name || enhancedName;
+                    enhancedGroupEmpno = manager.group_empno || enhancedGroupEmpno;
+                    enhancedEmpno = manager.empno || enhancedEmpno;
+                    enhancedSynoUser = manager.syno_username || enhancedSynoUser;
+                    enhancedEmail = manager.email || enhancedEmail;
+                }
+            } catch (err) {
+                console.error("Error fetching IFM Manager API:", err);
+            }
+        }
+
         // --- Bổ sung: Đồng bộ ID cục bộ từ FAC DB ---
         let localId = userData.id;
         try {
@@ -58,10 +100,10 @@ const AuthComp = ({
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ 
-                    empno: userData.empno,
-                    name: userData.name,
-                    dept: userData.dept,
-                    email: userData.email
+                    empno: enhancedEmpno,
+                    name: enhancedName,
+                    dept: enhancedDept,
+                    email: enhancedEmail
                 }),
             });
             const syncData = await syncRes.json();
@@ -75,16 +117,16 @@ const AuthComp = ({
         const sessionUser: User = {
             id: localId,
             portalId: userData.id,
-            empno: userData.empno,
-            name: userData.name,
-            username: userData.username,
-            dept: userData.dept,
-            unit_name: userData.name,
-            high_dept: userData.high_dept,
-            location: userData.location,
-            email: userData.email,
+            empno: enhancedEmpno,
+            name: enhancedName,
+            username: userData.username || enhancedSynoUser,
+            dept: enhancedDept,
+            unit_name: enhancedName,
+            high_dept: enhancedHighDept,
+            location: userData.location || "vg",
+            email: enhancedEmail,
             role: role,
-            group_empno: userData.group_empno,
+            group_empno: enhancedGroupEmpno,
         };
 
         login(sessionUser);
@@ -150,7 +192,6 @@ const AuthComp = ({
                                 window.location.href = process.env.NEXT_PUBLIC_PORTAL_URL || window.location.origin;
                                 return;
                             }
-
                             // Nếu muốn lưu danh sách company vào userData thì có thể gán tại đây
                             // userData.userCompanies = checkData.data.map((item: any) => item.company.code);
                         }

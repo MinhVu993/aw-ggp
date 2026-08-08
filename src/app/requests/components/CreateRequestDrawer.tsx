@@ -176,7 +176,7 @@ export default function CreateRequestDrawer({
               type="text"
               className={styles.formInput}
               required
-              placeholder="VD: Nhà máy 2 / Khách hàng ABC..."
+              placeholder="Nhập địa điểm mang đến"
               value={destination}
               onChange={e => setDestination(e.target.value)}
             />
@@ -201,26 +201,26 @@ export default function CreateRequestDrawer({
           <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem", marginTop: "0.5rem" }}>
             <div className={styles.formSectionTitle} style={{ marginBottom: "0" }}>
               <Package size={18} weight="bold" color="var(--accent-primary)" />
-              {t("items_list") || "Danh sách Vật liệu / Tài sản"}
+              {"Danh sách Vật liệu"}
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
               {itemsList.map((item, index) => (
                 <div key={index} style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
                   <input
                     className={styles.formInput}
-                    style={{ flex: "2", minWidth: "150px" }}
-                    placeholder={t("item_name") || "Tên vật tư"}
+                    style={{ flex: "3", minWidth: "250px" }}
+                    placeholder={"Tên vật tư"}
                     required
                     value={item.name}
                     onChange={e => handleItemFieldChange(index, "name", e.target.value)}
                   />
                   <input
                     className={styles.formInput}
-                    style={{ flex: "1", minWidth: "80px" }}
+                    style={{ flex: "1", minWidth: "60px" }}
                     type="number"
                     step="0.001"
                     min="0"
-                    placeholder={t("quantity") || "Số lượng"}
+                    placeholder={"Số lượng"}
                     required
                     value={item.quantity}
                     onChange={e => handleItemFieldChange(index, "quantity", e.target.value)}
@@ -228,15 +228,15 @@ export default function CreateRequestDrawer({
                   <input
                     className={styles.formInput}
                     style={{ flex: "1", minWidth: "80px" }}
-                    placeholder={t("unit") || "Đơn vị (Cái, kg...)"}
+                    placeholder={"Đơn vị"}
                     required
                     value={item.unit}
                     onChange={e => handleItemFieldChange(index, "unit", e.target.value)}
                   />
                   <input
                     className={styles.formInput}
-                    style={{ flex: "2", minWidth: "150px" }}
-                    placeholder={t("purpose") || "Mục đích"}
+                    style={{ flex: "2", minWidth: "180px" }}
+                    placeholder={"Mục đích"}
                     required
                     value={item.purpose}
                     onChange={e => handleItemFieldChange(index, "purpose", e.target.value)}
@@ -244,21 +244,19 @@ export default function CreateRequestDrawer({
                   <div style={{ display: "flex", gap: "0.25rem", flexShrink: 0 }}>
                     <button 
                       type="button" 
-                      className={styles.btnOutline} 
-                      style={{ padding: "0 0.5rem", borderColor: "rgba(239, 68, 68, 0.5)", color: "#ef4444", background: "rgba(239, 68, 68, 0.1)", borderRadius: "0" }} 
+                      className={`${styles.itemActionBtn} ${styles.btnRemove}`}
                       onClick={() => removeItemRow(index)}
                       title={t("remove_row")}
                     >
-                      <Minus size={14} weight="bold" />
+                      <Minus size={16} weight="bold" />
                     </button>
                     <button 
                       type="button" 
-                      className={styles.btnOutline} 
-                      style={{ padding: "0 0.5rem", borderColor: "rgba(16, 185, 129, 0.5)", color: "#10b981", background: "rgba(16, 185, 129, 0.1)", borderRadius: "0" }} 
+                      className={`${styles.itemActionBtn} ${styles.btnAdd}`}
                       onClick={addNewItemRow}
                       title={t("add_row")}
                     >
-                      <Plus size={14} weight="bold" />
+                      <Plus size={16} weight="bold" />
                     </button>
                   </div>
                 </div>

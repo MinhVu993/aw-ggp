@@ -48,7 +48,7 @@ export default function GuardPage() {
       requestCode: "GGP-20231010-001",
       applicantName: "Nguyễn Văn A",
       applicantDept: "PCC",
-      destination: "Nhà máy 2",
+      destination: "",
       status: "APPROVED_WAITING_GATE",
       qrExpiresAt: new Date(Date.now() + 3600000).toISOString(), // 1 hour from now
       isQrUsed: false,

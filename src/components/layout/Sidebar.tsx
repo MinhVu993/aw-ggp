@@ -7,7 +7,7 @@ import { usePathname } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import styles from "./Sidebar.module.css";
 import { useTranslation } from "@/context/LanguageContext";
-import { ChartBar, Gear, User, FileText, ClipboardText, Clock } from "@phosphor-icons/react";
+import { ChartBar, Gear, User, FileText, ClipboardText, Clock, QrCode } from "@phosphor-icons/react";
 
 export default function Sidebar() {
     const pathname = usePathname();
@@ -22,6 +22,7 @@ export default function Sidebar() {
 
     const NAV_ITEMS = [
         { label: t("access_request"), href: "/requests", icon: <ClipboardText weight="fill" size={24} />, roles: ["admin", "review", "user"] },
+        { label: t("guard_scanner"), href: "/guard", icon: <QrCode weight="bold" size={24} />, roles: ["admin", "guard", "user"] },
     ];
 
     // Important: filtered list must also match server (empty if not mounted)

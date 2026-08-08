@@ -324,7 +324,8 @@ export const TRANSLATIONS: Translations = {
   audit_at_time: { vi: ' vào lúc {time}', en: ' at {time}', zh: ' 于 {time}' },
 
   // Access Requests Specific translations
-  access_request: { vi: 'Yêu cầu truy cập', en: 'Access Requests', zh: '访问申请' },
+  access_request: { vi: 'Yêu cầu mới', en: 'New Request', zh: '新申请' },
+  guard_scanner: { vi: 'Quét mã Bảo vệ', en: 'Guard Scanner', zh: '保安扫描' },
   request_dashboard: { vi: 'Bảng quản lý yêu cầu', en: 'Request Dashboard', zh: '申请控制台' },
   request_subtitle: { vi: 'Quản lý và tạo đơn yêu cầu cấp quyền truy cập khu vực cho nhân sự hoặc nhà thầu', en: 'Manage and create access requests for employees and contractors', zh: '管理和创建员工或承包商的区域访问申请' },
   create_request: { vi: 'Tạo Yêu Cầu Mới', en: 'Create New Request', zh: '创建新申请' },
