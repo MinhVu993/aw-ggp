@@ -1,4 +1,6 @@
 "use client";
+import { useTranslation } from "@/context/LanguageContext";
+
 
 import React, { useEffect, useRef, useState } from "react";
 import { Barcode } from "@phosphor-icons/react";
@@ -9,6 +11,7 @@ interface QRScannerProps {
 }
 
 export default function QRScanner({ onScanSuccess, loading }: QRScannerProps) {
+  const { t } = useTranslation();
   const [inputValue, setInputValue] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -77,7 +80,7 @@ export default function QRScanner({ onScanSuccess, loading }: QRScannerProps) {
             borderRadius: "50%",
             animation: "spin 1s linear infinite"
           }} />
-          <span style={{ fontWeight: 600 }}>Đang xử lý...</span>
+          <span style={{ fontWeight: 600 }}>{t("processing")}</span>
           <style>{`
             @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
           `}</style>
@@ -100,10 +103,10 @@ export default function QRScanner({ onScanSuccess, loading }: QRScannerProps) {
 
       <div style={{ textAlign: "center" }}>
         <h3 style={{ margin: 0, fontSize: "1.2rem", fontWeight: 600, color: "var(--text-primary)" }}>
-          Chế độ Máy quét cầm tay
+          {t("scanner_mode")}
         </h3>
         <p style={{ margin: "0.5rem 0 0", fontSize: "0.9rem", color: "var(--text-secondary)" }}>
-          Vui lòng cắm máy quét (USB/Bluetooth) và quét mã QR trên phiếu. Hệ thống đang lắng nghe...
+          {t("scanner_hint")}
         </p>
       </div>
 
@@ -114,13 +117,13 @@ export default function QRScanner({ onScanSuccess, loading }: QRScannerProps) {
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Nhấp vào đây và dùng máy quét..."
+          placeholder={t("scanner_placeholder")}
           style={{
             width: "100%",
             padding: "1rem 1rem 1rem 3rem",
             borderRadius: "8px",
             border: "2px solid var(--accent-primary)",
-            background: "rgba(0, 0, 0, 0.2)",
+            background: "var(--bg-primary)",
             color: "var(--text-primary)",
             fontSize: "1.1rem",
             outline: "none",

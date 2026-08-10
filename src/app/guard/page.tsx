@@ -1,10 +1,13 @@
 "use client";
 
+import { useTranslation } from "@/context/LanguageContext";
+import { useAuth } from "@/context/AuthContext";
 import React, { useState } from "react";
 import QRScanner from "./components/QRScanner";
 import RequestDetailsPanel from "./components/RequestDetailsPanel";
 import { toast } from "sonner";
-import { GoodsOutItem } from "@/app/requests/types";
+import { GoodsOutItem } from "@/app/(main)/types";
+import { ShieldCheck } from "@phosphor-icons/react";
 
 // Mock API response type
 export interface ScannedRequest {
@@ -17,9 +20,15 @@ export interface ScannedRequest {
   status: string;
   qrExpiresAt: string;
   isQrUsed: boolean;
+  startDate: string;
+  endDate: string;
+  carrierEmpno: string;
+  carrierName: string;
 }
 
 export default function GuardPage() {
+  const { t } = useTranslation();
+  const { user } = useAuth();
   const [scannedData, setScannedData] = useState<ScannedRequest | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -31,16 +40,18 @@ export default function GuardPage() {
 
     // Mock validation
     if (qrToken === "EXPIRED_TOKEN") {
-      toast.error("Mã QR đã hết hạn!");
+      toast.error(t("qr_expired"));
       setLoading(false);
       return;
     }
 
     if (qrToken === "USED_TOKEN") {
-      toast.error("Mã QR này đã được sử dụng trước đó!");
+      toast.error(t("qr_used"));
       setLoading(false);
       return;
     }
+
+    const today = new Date().toISOString().split('T')[0];
 
     // Mock successful response
     const mockRequest: ScannedRequest = {
@@ -52,6 +63,10 @@ export default function GuardPage() {
       status: "APPROVED_WAITING_GATE",
       qrExpiresAt: new Date(Date.now() + 3600000).toISOString(), // 1 hour from now
       isQrUsed: false,
+      startDate: today,
+      endDate: today,
+      carrierEmpno: "V00123",
+      carrierName: "Trần Bảo Vệ",
       items: [
         { name: "Máy tính xách tay", quantity: "1", unit: "Cái", purpose: "Làm việc tại NM2" },
         { name: "Tài liệu kỹ thuật", quantity: "5", unit: "Bộ", purpose: "Bàn giao dự án" }
@@ -60,16 +75,26 @@ export default function GuardPage() {
 
     setScannedData(mockRequest);
     setLoading(false);
-    toast.success("Quét mã thành công!");
+    toast.success(t("qr_success"));
   };
 
   const handleConfirmPass = async () => {
     if (!scannedData) return;
     setLoading(true);
 
+    const guardEmpno = user?.empno || "N/A";
+    const guardName = user?.name || "Bảo vệ";
+
+    // Payload sent to backend includes security_guard_empno and security_guard_name
+    console.log("Confirming pass with Guard info:", {
+      requestId: scannedData.id,
+      securityGuardEmpno: guardEmpno,
+      securityGuardName: guardName,
+    });
+
     await new Promise(resolve => setTimeout(resolve, 800));
     
-    toast.success("Đã xác nhận cho qua cổng thành công!");
+    toast.success(`${t("gate_confirm_success")} (${guardEmpno} - ${guardName})`);
     setScannedData(null);
     setLoading(false);
   };
@@ -89,11 +114,30 @@ export default function GuardPage() {
     }}>
       <div style={{ textAlign: "center", marginBottom: "2rem" }}>
         <h1 style={{ fontSize: "1.5rem", fontWeight: 700, color: "var(--text-primary)" }}>
-          Cổng An Ninh - Kiểm soát Hàng ra
+          {t("guard_title")}
         </h1>
         <p style={{ color: "var(--text-secondary)", fontSize: "0.9rem", marginTop: "0.5rem" }}>
-          Hướng camera vào mã QR trên Phiếu Mang Hàng
+          {t("guard_subtitle")}
         </p>
+
+        {/* Guard Session Info Badge from AuthComp */}
+        {user && (
+          <div style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "0.5rem",
+            background: "rgba(255, 255, 255, 0.05)",
+            border: "1px solid var(--glass-border)",
+            borderRadius: "20px",
+            padding: "6px 16px",
+            fontSize: "0.85rem",
+            color: "var(--text-secondary)",
+            marginTop: "0.75rem"
+          }}>
+            <ShieldCheck size={18} color="var(--accent-primary)" />
+            <span>Bảo vệ trực ca: <strong style={{ color: "var(--text-primary)" }}>{user.empno ? `${user.empno} - ` : ""}{user.name}</strong></span>
+          </div>
+        )}
       </div>
 
       {!scannedData ? (

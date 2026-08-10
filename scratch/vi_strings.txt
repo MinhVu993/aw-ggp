@@ -1,0 +1,96 @@
+csvHelpers.ts:49: const headers = "Tên vật tư,Số lượng,Đơn vị,Mục đích\n";
+csvHelpers.ts:50: const sample = "Máy tính xách tay,1,Cái,Làm việc ở nhà\nTài liệu dự án,5,Cuốn,Gửi đối tác\n";
+page.tsx:218: toast.error("Không thể tải danh sách dữ liệu!");
+page.tsx:347: toast.error(t("please_fill_required_fields") || "Vui lòng điền Nơi mang đến!");
+page.tsx:354: toast.error(t("please_add_at_least_one_item") || "Vui lòng nhập ít nhất 1 vật liệu!");
+page.tsx:418: title: t("confirm_cancel_request") || "Xác nhận hủy đơn",
+page.tsx:419: message: t("confirm_cancel_desc") || "Bạn có chắc chắn muốn hủy yêu cầu này không? Hành động này không thể hoàn tác.",
+page.tsx:420: confirmText: t("cancel") || "Hủy đơn",
+page.tsx:447: title: t("btn_approve") || "Phê duyệt yêu cầu",
+page.tsx:448: message: t("confirm_approve_request") || "Bạn có chắc chắn muốn phê duyệt yêu cầu này?",
+page.tsx:449: confirmText: t("btn_approve") || "Phê duyệt",
+page.tsx:752: statusText = t("btn_approve") || "Đã duyệt";
+page.tsx:755: statusText = t("btn_reject") || "Từ chối";
+page.tsx:760: statusText = t("btn_reject") || "Từ chối";
+page.tsx:766: statusText = t("btn_approve") || "Đã duyệt";
+page.tsx:1392: {t("loading_data") || "Đang tải dữ liệu..."}
+page.tsx:1432: + {item.items.length - 2} {t("others") || "vật khác"}...
+page.tsx:1585: {language === 'vi' ? 'LÝ DO TỪ CHỐI' : 'REJECTION REASON'}
+page.tsx:1606: title={t("view_history") || "Xem lộ trình"}
+page.tsx:1650: title={t("export_csv") || "Xuất CSV"}
+page.tsx:1654: <span>{t("export_csv") || "Xuất CSV"}</span>
+ActionDropdown.tsx:80: title="Thao tác"
+ActionDropdown.tsx:116: <span>{t("btn_approve") || "Phê duyệt"}</span>
+ActionDropdown.tsx:129: <span>{t("btn_reject") || "Từ chối"}</span>
+ActionDropdown.tsx:146: <span>{t("details") || "Chi tiết"}</span>
+ActionDropdown.tsx:161: <span>{t("renew") || "Gia hạn"}</span>
+ActionDropdown.tsx:178: <span>{t("print") || "In Phiếu"}</span>
+ConfirmModal.tsx:35: {t("cancel") || "Hủy"}
+ConfirmModal.tsx:41: {modal.confirmText || "Xác nhận"}
+CreateRequestDrawer.tsx:173: {t("destination") || "Nơi mang đến"} <span style={{ color: "#ef4444" }}>*</span>
+CreateRequestDrawer.tsx:179: placeholder="Nhập địa điểm mang đến"
+CreateRequestDrawer.tsx:185: {/* Note / Ghi chú */}
+CreateRequestDrawer.tsx:188: {t("note") || "Ghi chú thêm"}
+CreateRequestDrawer.tsx:192: placeholder="Nhập ghi chú hoặc giải trình thêm (nếu có)..."
+CreateRequestDrawer.tsx:204: {"Danh sách Vật liệu"}
+CreateRequestDrawer.tsx:212: placeholder={"Tên vật tư"}
+CreateRequestDrawer.tsx:223: placeholder={"Số lượng"}
+CreateRequestDrawer.tsx:231: placeholder={"Đơn vị"}
+CreateRequestDrawer.tsx:239: placeholder={"Mục đích"}
+DetailRequestDrawer.tsx:35: {t("access_request") || "Phiếu mang hàng"}{" "}
+DetailRequestDrawer.tsx:131: {t("destination") || "Nơi mang đến"}
+DetailRequestDrawer.tsx:139: <label className={styles.formLabel} style={{ marginBottom: "4px" }}>{t("note") || "Ghi chú thêm"}</label>
+DetailRequestDrawer.tsx:148: <X size={16} weight="bold" /> Lý do yêu cầu sửa đổi
+DetailRequestDrawer.tsx:157: <X size={16} weight="bold" /> Lý do từ chối
+DetailRequestDrawer.tsx:167: {t("items_list") || "Danh sách Vật liệu"} ({request.items?.length || request.itemCount || 0})
+DetailRequestDrawer.tsx:173: <th style={{ padding: "10px 16px", borderBottom: "1px solid var(--glass-border)" }}>{t("item_name") || "Tên vật tư"}</th>
+DetailRequestDrawer.tsx:175: <th style={{ padding: "10px 16px", borderBottom: "1px solid var(--glass-border)", width: "15%" }}>{t("unit") || "ĐVT"}</th>
+DetailRequestDrawer.tsx:176: <th style={{ padding: "10px 16px", borderBottom: "1px solid var(--glass-border)", width: "35%" }}>{t("purpose") || "Mục đích"}</th>
+DetailRequestDrawer.tsx:191: Không có dữ liệu vật tư chi tiết
+DetailRequestDrawer.tsx:215: {t("renewed_by") || "Đã gia hạn bởi"} {request.renewedToCode}
+DetailRequestDrawer.tsx:219: <Copy size={16} weight="bold" /> {t("renew") || "Gia hạn / Copy đơn"}
+HistoryModal.tsx:40: statusText = t("btn_approve") || "Đã duyệt";
+HistoryModal.tsx:43: statusText = t("btn_reject") || "Từ chối";
+HistoryModal.tsx:48: statusText = t("btn_reject") || "Từ chối";
+HistoryModal.tsx:54: statusText = t("btn_approve") || "Đã duyệt";
+HistoryModal.tsx:120: {t("approval_history") || "Lộ trình & Lịch sử phê duyệt"}
+PrintTemplate.tsx:86: Bộ phận soạn thảo<br/>編訂部門<br/>Tổng vụ 總務部
+PrintTemplate.tsx:90: <div className="title-text">PHIẾU MANG HÀNG RA NGOÀI</div>
+PrintTemplate.tsx:93: <td style={{ width: "20%" }}>Ngày thiết lập (sửa đổi)<br/>制訂日期</td>
+PrintTemplate.tsx:97: <td>Mã số tài liệu<br/>文件編號</td>
+PrintTemplate.tsx:101: <td>Phiên bản 版本<br/>3</td>
+PrintTemplate.tsx:107: <td colSpan={3} className="text-left font-bold">Ngày 填表日期 : {request.requestDate || request.startDate}</td>
+PrintTemplate.tsx:113: <td colSpan={2}>ĐƠN VỊ MANG RA CỔNG<br/>攜出單位</td>
+PrintTemplate.tsx:114: <td>HỌ TÊN 姓名</td>
+PrintTemplate.tsx:115: <td colSpan={2}>ĐỊA ĐIỂM MANG ĐẾN<br/>攜往地方</td>
+PrintTemplate.tsx:132: <td colSpan={2}>TÊN VẬT LIỆU 物品名稱</td>
+PrintTemplate.tsx:133: <td>SỐ LƯỢNG 數量</td>
+PrintTemplate.tsx:134: <td colSpan={2}>MỤC ĐÍCH 用途</td>
+PrintTemplate.tsx:165: <td>BẢO VỆ<br/>保衛</td>
+PrintTemplate.tsx:166: <td colSpan={2}>CHỦ QUẢN CẤP SỞ<br/>處級主管</td>
+PrintTemplate.tsx:167: <td>CHỦ QUẢN ĐƠN VỊ<br/>部級主管</td>
+PrintTemplate.tsx:168: <td>NGƯỜI MANG HÀNG RA CỔNG<br/>攜出人員</td>
+PrintTemplate.tsx:181: Chú ý: Người mang hàng ra cổng ➔ Chủ quản đơn vị ➔ Chủ quản cấp sở ➔ Bảo vệ<br/>
+page.tsx:34: toast.error("Mã QR đã hết hạn!");
+page.tsx:40: toast.error("Mã QR này đã được sử dụng trước đó!");
+page.tsx:49: applicantName: "Nguyễn Văn A",
+page.tsx:56: { name: "Máy tính xách tay", quantity: "1", unit: "Cái", purpose: "Làm việc tại NM2" },
+page.tsx:57: { name: "Tài liệu kỹ thuật", quantity: "5", unit: "Bộ", purpose: "Bàn giao dự án" }
+page.tsx:63: toast.success("Quét mã thành công!");
+page.tsx:72: toast.success("Đã xác nhận cho qua cổng thành công!");
+page.tsx:92: Cổng An Ninh - Kiểm soát Hàng ra
+page.tsx:95: Hướng camera vào mã QR trên Phiếu Mang Hàng
+QRScanner.tsx:80: <span style={{ fontWeight: 600 }}>Đang xử lý...</span>
+QRScanner.tsx:103: Chế độ Máy quét cầm tay
+QRScanner.tsx:106: Vui lòng cắm máy quét (USB/Bluetooth) và quét mã QR trên phiếu. Hệ thống đang lắng nghe...
+QRScanner.tsx:117: placeholder="Nhấp vào đây và dùng máy quét..."
+RequestDetailsPanel.tsx:29: Chi tiết phiếu {data.requestCode}
+RequestDetailsPanel.tsx:40: HỢP LỆ
+RequestDetailsPanel.tsx:51: KHÔNG HỢP LỆ
+RequestDetailsPanel.tsx:60: <div style={{ fontSize: "0.75rem", color: "var(--text-secondary)" }}>Người mang</div>
+RequestDetailsPanel.tsx:67: <div style={{ fontSize: "0.75rem", color: "var(--text-secondary)" }}>Nơi đến</div>
+RequestDetailsPanel.tsx:74: <div style={{ fontSize: "0.75rem", color: "var(--text-secondary)" }}>Hạn mã QR</div>
+RequestDetailsPanel.tsx:84: Danh sách vật tư
+RequestDetailsPanel.tsx:104: <div style={{ fontSize: "0.8rem", color: "var(--text-secondary)" }}>Mục đích: {item.purpose}</div>
+RequestDetailsPanel.tsx:140: Hủy Bỏ
+RequestDetailsPanel.tsx:163: {loading ? "Đang xử lý..." : "XÁC NHẬN QUA CỔNG"}

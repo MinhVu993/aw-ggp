@@ -17,7 +17,7 @@ DROP TABLE IF EXISTS goods_out_requests CASCADE;
 -- -----------------------------------------------------------------------------
 CREATE TABLE goods_out_requests (
   request_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-  request_no TEXT NOT NULL UNIQUE, -- Mã phiếu hiển thị (ví dụ: GOR-20231118-0001)
+  request_no TEXT NOT NULL UNIQUE, -- Mã phiếu hiển thị (ví dụ: GGP-20231118-0001)
   
   -- Metadata tài liệu quản lý
   doc_code TEXT NOT NULL DEFAULT 'AWM-4-FAC04-02',
@@ -39,10 +39,9 @@ CREATE TABLE goods_out_requests (
   -- 4: COMPLETED             (Bảo vệ đã quét QR & xác nhận cho qua cổng)
   -- 5: RETURNED              (Người duyệt TRẢ VỀ yêu cầu người tạo sửa lại)
   -- 6: REJECTED              (Bị TỪ CHỐI hoàn toàn bởi người duyệt)
-  -- 7: CANCELLED             (Người tạo chủ động HỦY)
   -- ---------------------------------------------------------------------------
   status TEXT NOT NULL DEFAULT 'PENDING_DEPT' 
-    CHECK (status IN ('DRAFT', 'PENDING_DEPT', 'PENDING_DIVISION', 'APPROVED_WAITING_GATE', 'COMPLETED', 'RETURNED', 'REJECTED', 'CANCELLED')),
+    CHECK (status IN ('DRAFT', 'PENDING_DEPT', 'PENDING_DIVISION', 'APPROVED_WAITING_GATE', 'COMPLETED', 'RETURNED', 'REJECTED')),
   current_step INT NOT NULL DEFAULT 1 CHECK (current_step BETWEEN 0 AND 4),
   
   -- Lý do Trả về / Từ chối
@@ -53,7 +52,7 @@ CREATE TABLE goods_out_requests (
   -- ---------------------------------------------------------------------------
   -- QUẢN LÝ MÃ QR CODE (Sinh tự động khi CHỦ QUẢN CẤP SỞ duyệt)
   -- ---------------------------------------------------------------------------
-  qr_code_token TEXT UNIQUE,                 -- Token duy nhất của Mã QR (VD: QR-GOR-20231118-X8F9A)
+  qr_code_token TEXT UNIQUE,                 -- Token duy nhất của Mã QR (VD: QR-GGP-20231118-X8F9A)
   qr_generated_at TIMESTAMPTZ,               -- Mốc thời gian Cấp sở duyệt & sinh mã QR
   qr_expires_at TIMESTAMPTZ,                 -- Hạn sử dụng của Mã QR (ví dụ: 23:59 ngày đăng ký)
   
@@ -64,6 +63,13 @@ CREATE TABLE goods_out_requests (
   
   -- Thời gian
   request_date DATE NOT NULL DEFAULT CURRENT_DATE,
+  start_date DATE NOT NULL DEFAULT CURRENT_DATE,
+  end_date DATE NOT NULL DEFAULT CURRENT_DATE,
+  
+  -- Người mang hàng (Carrier)
+  carrier_empno TEXT NOT NULL DEFAULT '',
+  carrier_name TEXT NOT NULL DEFAULT '',
+  
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );

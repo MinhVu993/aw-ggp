@@ -104,8 +104,12 @@ export default function PrintTemplate({ request, id }: { request: RequestItem | 
 
           {/* Date & NO */}
           <tr>
-            <td colSpan={3} className="text-left font-bold">Ngày 填表日期 : {request.requestDate || request.startDate}</td>
+            <td colSpan={3} className="text-left font-bold">Ngày tạo 填表日期 : {request.requestDate}</td>
             <td colSpan={2} className="text-left font-bold">NO. : {request.requestCode}</td>
+          </tr>
+          <tr>
+            <td colSpan={3} className="text-left font-bold" style={{ color: "#d97706" }}>Thời hạn 有效期 : {request.startDate || "—"} ➜ {request.endDate || "—"}</td>
+            <td colSpan={2} className="text-left font-bold" style={{ color: "#d97706" }}>Người mang 携出人 : {request.carrierEmpno || ""} {request.carrierName}</td>
           </tr>
 
           {/* User Info Headers */}

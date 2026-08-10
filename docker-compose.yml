@@ -1,41 +1,30 @@
 version: '3.8'
 
 services:
-  # App Next.js chạy trên port 6604 tại máy 10.1.16.89
-  fac-app:
+  # App Next.js GGP (Good Gate Pass)
+  ggp-app:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: fac-app
+    container_name: ggp-app
     restart: unless-stopped
     ports:
-      - '6604:3000'
+      - '7301:3000'
     env_file:
       - .env.local
     environment:
       - NODE_ENV=production
-      - NEXT_PUBLIC_BASE_PATH=/ps/fac
-      - DATABASE_URL=postgresql://postgres:admin@10.13.34.166:7604/fac_db
+      - NEXT_PUBLIC_BASE_PATH=/ps/ggp
+      - DATABASE_URL=postgresql://postgres:admin@10.13.34.166:7604/ggp_db
       - MYSQL_HOST=10.1.16.89
       - TZ=Asia/Ho_Chi_Minh
     volumes:
       - ./public/reports:/app/public/reports
     networks:
-      - fac-network
-
-  # Service chạy ngầm để trigger các API theo lịch (Cron job)
-  fac-cron:
-    build:
-      context: ./cron
-    container_name: fac-cron
-    restart: unless-stopped
-    depends_on:
-      - fac-app
-    networks:
-      - fac-network
+      - ggp-network
 
 networks:
-  fac-network:
+  ggp-network:
     driver: bridge
 
 # docker compose build --no-cache && docker compose up -d

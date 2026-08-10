@@ -1,4 +1,6 @@
 "use client";
+import { useTranslation } from "@/context/LanguageContext";
+
 
 import React from "react";
 import { ScannedRequest } from "../page";
@@ -12,7 +14,15 @@ interface RequestDetailsPanelProps {
 }
 
 export default function RequestDetailsPanel({ data, onConfirm, onCancel, loading }: RequestDetailsPanelProps) {
+  const { t } = useTranslation();
   const isExpired = new Date(data.qrExpiresAt) < new Date();
+  
+  const today = new Date().toISOString().split('T')[0];
+  const isValidDateRange = data.startDate && data.endDate 
+    ? (data.startDate <= today && data.endDate >= today)
+    : true;
+
+  const isValidStatus = data.status === "APPROVED_WAITING_GATE" && isValidDateRange && !isExpired && !data.isQrUsed;
 
   return (
     <div style={{
@@ -26,9 +36,9 @@ export default function RequestDetailsPanel({ data, onConfirm, onCancel, loading
     }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem", paddingBottom: "1rem", borderBottom: "1px solid rgba(255, 255, 255, 0.1)" }}>
         <h2 style={{ fontSize: "1.25rem", margin: 0, fontWeight: 700 }}>
-          Chi tiết phiếu {data.requestCode}
+          {t("ticket_details")} {data.requestCode}
         </h2>
-        {data.status === "APPROVED_WAITING_GATE" ? (
+        {isValidStatus ? (
           <span style={{
             background: "rgba(16, 185, 129, 0.15)",
             color: "#10b981",
@@ -37,7 +47,7 @@ export default function RequestDetailsPanel({ data, onConfirm, onCancel, loading
             fontSize: "0.8rem",
             fontWeight: 600
           }}>
-            HỢP LỆ
+            {t("valid")}
           </span>
         ) : (
           <span style={{
@@ -48,7 +58,7 @@ export default function RequestDetailsPanel({ data, onConfirm, onCancel, loading
             fontSize: "0.8rem",
             fontWeight: 600
           }}>
-            KHÔNG HỢP LỆ
+            KHÔNG {t("valid")} {!isValidDateRange ? "(Sai ngày)" : ""}
           </span>
         )}
       </div>
@@ -57,23 +67,30 @@ export default function RequestDetailsPanel({ data, onConfirm, onCancel, loading
         <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
           <User size={18} color="var(--text-secondary)" />
           <div>
-            <div style={{ fontSize: "0.75rem", color: "var(--text-secondary)" }}>Người mang</div>
+            <div style={{ fontSize: "0.75rem", color: "var(--text-secondary)" }}>{t("applicant")}</div>
             <div style={{ fontWeight: 600 }}>{data.applicantName} ({data.applicantDept})</div>
           </div>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
           <MapPin size={18} color="var(--text-secondary)" />
           <div>
-            <div style={{ fontSize: "0.75rem", color: "var(--text-secondary)" }}>Nơi đến</div>
-            <div style={{ fontWeight: 600 }}>{data.destination}</div>
+            <div style={{ fontSize: "0.75rem", color: "var(--text-secondary)" }}>{t("destination")}</div>
+            <div style={{ fontWeight: 600 }}>{data.destination || "—"}</div>
+          </div>
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+          <User size={18} color="var(--text-secondary)" />
+          <div>
+            <div style={{ fontSize: "0.75rem", color: "var(--text-secondary)" }}>{t("carrier_info")}</div>
+            <div style={{ fontWeight: 600, color: "var(--accent-primary)" }}>{data.carrierEmpno} {data.carrierName}</div>
           </div>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
           <CalendarBlank size={18} color="var(--text-secondary)" />
           <div>
-            <div style={{ fontSize: "0.75rem", color: "var(--text-secondary)" }}>Hạn mã QR</div>
-            <div style={{ fontWeight: 600, color: isExpired ? "#ef4444" : "inherit" }}>
-              {new Date(data.qrExpiresAt).toLocaleString("vi-VN")}
+            <div style={{ fontSize: "0.75rem", color: "var(--text-secondary)" }}>{t("date_range")}</div>
+            <div style={{ fontWeight: 600, color: !isValidDateRange ? "#ef4444" : "inherit" }}>
+              {data.startDate} ➜ {data.endDate}
             </div>
           </div>
         </div>
@@ -81,7 +98,7 @@ export default function RequestDetailsPanel({ data, onConfirm, onCancel, loading
 
       <h3 style={{ fontSize: "1rem", marginBottom: "1rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
         <Package size={20} color="var(--accent-primary)" />
-        Danh sách vật tư
+        {t("items_list")}
       </h3>
       
       <div style={{ 
@@ -101,7 +118,7 @@ export default function RequestDetailsPanel({ data, onConfirm, onCancel, loading
           }}>
             <div>
               <div style={{ fontWeight: 600 }}>{item.name}</div>
-              <div style={{ fontSize: "0.8rem", color: "var(--text-secondary)" }}>Mục đích: {item.purpose}</div>
+              <div style={{ fontSize: "0.8rem", color: "var(--text-secondary)" }}>{t("purpose")}: {item.purpose}</div>
             </div>
             <div style={{ 
               background: "rgba(255,255,255,0.1)", 
@@ -141,7 +158,7 @@ export default function RequestDetailsPanel({ data, onConfirm, onCancel, loading
         </button>
         <button 
           onClick={onConfirm}
-          disabled={loading || data.status !== "APPROVED_WAITING_GATE" || isExpired || data.isQrUsed}
+          disabled={loading || !isValidStatus}
           style={{
             flex: 2,
             padding: "0.875rem",
@@ -150,17 +167,17 @@ export default function RequestDetailsPanel({ data, onConfirm, onCancel, loading
             background: "#10b981", // Green color for confirm
             color: "white",
             fontWeight: 700,
-            cursor: (loading || data.status !== "APPROVED_WAITING_GATE" || isExpired || data.isQrUsed) ? "not-allowed" : "pointer",
+            cursor: (loading || !isValidStatus) ? "not-allowed" : "pointer",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             gap: "0.5rem",
-            opacity: (loading || data.status !== "APPROVED_WAITING_GATE" || isExpired || data.isQrUsed) ? 0.5 : 1,
+            opacity: (loading || !isValidStatus) ? 0.5 : 1,
             boxShadow: "0 4px 14px rgba(16, 185, 129, 0.4)"
           }}
         >
           <Check size={20} weight="bold" />
-          {loading ? "Đang xử lý..." : "XÁC NHẬN QUA CỔNG"}
+          {loading ? t("processing") : t("confirm_gate")}
         </button>
       </div>
     </div>

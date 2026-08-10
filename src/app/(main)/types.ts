@@ -12,10 +12,12 @@ export interface RequestItem {
   title: string;
   reason: string;
   requester_id: number;
-  status: number; // 1: PENDING_DEPT, 2: APPROVED_WAITING_GATE, 3: REJECTED, 4: RETURNED, 5: COMPLETED, 6: CANCELLED
-  requestDate: string; // Used instead of startDate/endDate
-  startDate?: string;  // Kept for backward compatibility if needed, but not used in UI
-  endDate?: string;    // Kept for backward compatibility
+  status: number; // 1: PENDING_DEPT, 2: APPROVED_WAITING_GATE, 3: REJECTED, 4: RETURNED, 5: COMPLETED
+  requestDate: string; // Used for creation date
+  startDate: string;  
+  endDate: string;    
+  carrierEmpno: string; // Người mang hàng
+  carrierName: string;  // Tên người mang hàng
   rejectReason?: string;
   returnReason?: string; // New
   approvedAt?: string;

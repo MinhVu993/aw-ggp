@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Noto_Sans } from "next/font/google";
 import "./globals.css";
-import Sidebar from "@/components/layout/Sidebar";
 import Header from "@/components/layout/Header";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import { Toaster } from "sonner";
@@ -18,7 +17,7 @@ const noto = Noto_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "AW-GGP",
+  title: "[AW - GGP] - Good Gate Pass",
   description: "AW-GGP",
   keywords: ["Next.js", "React", "Web App", "Premium Design", "Vanilla CSS"],
   authors: [{ name: "Vu Huynh" }],
@@ -26,7 +25,7 @@ export const metadata: Metadata = {
     icon: `${process.env.NEXT_PUBLIC_BASE_PATH || ''}/logo.png`,
   },
   openGraph: {
-    title: "AW-GGP",
+    title: "[AW - GGP] - Good Gate Pass",
     description: "AW-GGP",
     type: "website",
   },
@@ -46,7 +45,6 @@ export default function RootLayout({
             <AuthProvider>
               <AuthComp />
               <div className="app-layout">
-                <Sidebar />
                 <div className="main-content">
                   <Suspense fallback={null}>
                     <Header />

@@ -107,10 +107,10 @@ export default function NotificationDropdown() {
             markAsRead(n.id);
         }
         setIsOpen(false);
-        if (n.reference_id) {
-            router.push(`/requests?id=${n.reference_id}`);
+        if (n.type === 'APPROVAL_REQUEST' && n.reference_id) {
+            router.push(`/?id=${n.reference_id}`);
         } else {
-            router.push('/requests');
+            router.push('/');
         }
     };
 

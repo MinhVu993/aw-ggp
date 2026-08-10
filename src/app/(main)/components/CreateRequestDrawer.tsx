@@ -1,5 +1,6 @@
+import { useTranslation } from "@/context/LanguageContext";
 import React from 'react';
-import { X, ArrowCounterClockwise, Check, MapPin, Package, Minus, Plus } from "@phosphor-icons/react";
+import { X, ArrowCounterClockwise, Check, MapPin, Package, Minus, Plus, CalendarBlank } from "@phosphor-icons/react";
 import styles from "../requests.module.css";
 import { GoodsOutItem } from "../types";
 
@@ -14,6 +15,14 @@ interface CreateRequestDrawerProps {
   user: any;
   destination: string;
   setDestination: (val: string) => void;
+  startDate: string;
+  setStartDate: (val: string) => void;
+  endDate: string;
+  setEndDate: (val: string) => void;
+  carrierEmpno: string;
+  setCarrierEmpno: (val: string) => void;
+  carrierName: string;
+  setCarrierName: (val: string) => void;
   note: string;
   setNote: (val: string) => void;
   itemsList: GoodsOutItem[];
@@ -35,6 +44,14 @@ export default function CreateRequestDrawer({
   user,
   destination,
   setDestination,
+  startDate,
+  setStartDate,
+  endDate,
+  setEndDate,
+  carrierEmpno,
+  setCarrierEmpno,
+  carrierName,
+  setCarrierName,
   note,
   setNote,
   itemsList,
@@ -170,26 +187,79 @@ export default function CreateRequestDrawer({
           <div className={styles.formGroup} style={{ marginTop: "0.5rem" }}>
             <label className={styles.formLabel}>
               <MapPin size={14} style={{ display: "inline", marginRight: "4px" }} />
-              {t("destination") || "Nơi mang đến"} <span style={{ color: "#ef4444" }}>*</span>
+              {t("destination")} <span style={{ color: "#ef4444" }}>*</span>
             </label>
             <input
               type="text"
               className={styles.formInput}
               required
-              placeholder="Nhập địa điểm mang đến"
+              placeholder={t("placeholder_destination")}
               value={destination}
               onChange={e => setDestination(e.target.value)}
             />
           </div>
 
+          {/* Validity & Carrier (Compact Layout) */}
+          <div style={{
+            marginTop: "1rem",
+            background: "var(--bg-secondary)",
+            border: "1px solid var(--glass-border)",
+            padding: "1rem",
+            display: "flex",
+            flexDirection: "column",
+            gap: "1rem"
+          }}>
+            <div style={{
+              fontSize: "0.75rem",
+              fontWeight: 600,
+              color: "var(--text-secondary)",
+              textTransform: "uppercase",
+              letterSpacing: "0.05em",
+              display: "flex",
+              alignItems: "center",
+              gap: "0.5rem"
+            }}>
+              <CalendarBlank size={14} />
+              {t("date_range")} & {t("carrier_info")}
+            </div>
+            
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 0.6fr 1.4fr", gap: "0.75rem" }}>
+              <div className={styles.formGroup}>
+                <label className={styles.formLabel} style={{ fontSize: "0.7rem", marginBottom: "4px" }}>
+                  {t("start_date")} <span style={{ color: "#ef4444" }}>*</span>
+                </label>
+                <input type="date" className={styles.formInput} style={{ padding: "0.5rem", fontSize: "0.85rem" }} required value={startDate} onChange={e => setStartDate(e.target.value)} />
+              </div>
+              <div className={styles.formGroup}>
+                <label className={styles.formLabel} style={{ fontSize: "0.7rem", marginBottom: "4px" }}>
+                  {t("end_date")} <span style={{ color: "#ef4444" }}>*</span>
+                </label>
+                <input type="date" className={styles.formInput} style={{ padding: "0.5rem", fontSize: "0.85rem" }} required value={endDate} onChange={e => setEndDate(e.target.value)} />
+              </div>
+              <div className={styles.formGroup}>
+                <label className={styles.formLabel} style={{ fontSize: "0.7rem", marginBottom: "4px" }}>
+                  {t("carrier_empno")} <span style={{ color: "#ef4444" }}>*</span>
+                </label>
+                <input type="text" className={styles.formInput} style={{ padding: "0.5rem", fontSize: "0.85rem" }} required value={carrierEmpno} onChange={e => setCarrierEmpno(e.target.value)} placeholder="..." />
+              </div>
+              <div className={styles.formGroup}>
+                <label className={styles.formLabel} style={{ fontSize: "0.7rem", marginBottom: "4px" }}>
+                  {t("carrier_name")} <span style={{ color: "#ef4444" }}>*</span>
+                </label>
+                <input type="text" className={styles.formInput} style={{ padding: "0.5rem", fontSize: "0.85rem" }} required value={carrierName} onChange={e => setCarrierName(e.target.value)} placeholder="..." />
+              </div>
+            </div>
+          </div>
+
+
           {/* Note / Ghi chú */}
           <div className={styles.formGroup} style={{ marginTop: "1rem" }}>
             <label className={styles.formLabel}>
-              {t("note") || "Ghi chú thêm"}
+              {t("note")}
             </label>
             <textarea
               className={styles.formInput}
-              placeholder="Nhập ghi chú hoặc giải trình thêm (nếu có)..."
+              placeholder={t("placeholder_note")}
               value={note}
               onChange={e => setNote(e.target.value)}
               rows={2}
@@ -201,7 +271,7 @@ export default function CreateRequestDrawer({
           <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem", marginTop: "0.5rem" }}>
             <div className={styles.formSectionTitle} style={{ marginBottom: "0" }}>
               <Package size={18} weight="bold" color="var(--accent-primary)" />
-              {"Danh sách Vật liệu"}
+              {t("items_list")}
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
               {itemsList.map((item, index) => (
@@ -209,7 +279,7 @@ export default function CreateRequestDrawer({
                   <input
                     className={styles.formInput}
                     style={{ flex: "3", minWidth: "250px" }}
-                    placeholder={"Tên vật tư"}
+                    placeholder={t("item_name")}
                     required
                     value={item.name}
                     onChange={e => handleItemFieldChange(index, "name", e.target.value)}
@@ -220,23 +290,29 @@ export default function CreateRequestDrawer({
                     type="number"
                     step="0.001"
                     min="0"
-                    placeholder={"Số lượng"}
+                    placeholder={t("quantity")}
                     required
                     value={item.quantity}
                     onChange={e => handleItemFieldChange(index, "quantity", e.target.value)}
                   />
                   <input
+                    list="unit-suggestions-list"
                     className={styles.formInput}
-                    style={{ flex: "1", minWidth: "80px" }}
-                    placeholder={"Đơn vị"}
+                    style={{ flex: "1", minWidth: "100px" }}
+                    placeholder={t("unit")}
                     required
                     value={item.unit}
                     onChange={e => handleItemFieldChange(index, "unit", e.target.value)}
                   />
+                  <datalist id="unit-suggestions-list">
+                    {["Cái", "Bộ", "Chiếc", "Kg", "Thùng", "Hộp", "Cuộn", "Mét", "Tấm", "Pallet", "Lô", "Bao", "Bình", "Cặp", "Xe", "Khối", "Gram", "Lít"].map((u) => (
+                      <option key={u} value={u} />
+                    ))}
+                  </datalist>
                   <input
                     className={styles.formInput}
                     style={{ flex: "2", minWidth: "180px" }}
-                    placeholder={"Mục đích"}
+                    placeholder={t("purpose")}
                     required
                     value={item.purpose}
                     onChange={e => handleItemFieldChange(index, "purpose", e.target.value)}

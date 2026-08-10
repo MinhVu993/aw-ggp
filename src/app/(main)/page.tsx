@@ -86,6 +86,13 @@ function RequestsPageContent() {
   const [formTitle, setFormTitle] = useState("");
   const [formReason, setFormReason] = useState("");
   const [destination, setDestination] = useState("");
+  
+  // Date Range & Carrier
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [carrierEmpno, setCarrierEmpno] = useState("");
+  const [carrierName, setCarrierName] = useState("");
+
   const [itemsList, setItemsList] = useState<GoodsOutItem[]>([
     { name: "", quantity: "", unit: "", purpose: "" }
   ]);
@@ -114,6 +121,13 @@ function RequestsPageContent() {
   const [selectedStatusesFilter, setSelectedStatusesFilter] = useState<number[]>([]);
   const [openFilterColumn, setOpenFilterColumn] = useState<"requestCode" | "startDate" | "areas" | "personNames" | "requester" | "status" | null>(null);
   const [filterSearchQuery, setFilterSearchQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [statusFilter, searchQuery, selectedCodesFilter, selectedTimesFilter, selectedAreasFilter, selectedPeopleFilter, selectedRequestersFilter, selectedStatusesFilter]);
+
 
   const [rejectModalOpen, setRejectModalOpen] = useState(false);
   const [requestToReject, setRequestToReject] = useState<number | null>(null);
@@ -208,7 +222,7 @@ function RequestsPageContent() {
       }
     } catch (error) {
       console.error("Error fetching request data:", error);
-      toast.error("Không thể tải danh sách dữ liệu!");
+      toast.error(t("err_load_data"));
     } finally {
       setIsLoading(false);
     }
@@ -295,7 +309,7 @@ function RequestsPageContent() {
       if (req) {
         setSelectedRequest(req);
         // Tự động clear ID khỏi URL để tránh bị mở lại nếu reload (tùy chọn)
-        router.replace("/requests"); 
+        router.replace("/"); 
       }
     }
   }, [searchParams, requests]);
@@ -337,14 +351,14 @@ function RequestsPageContent() {
     e.preventDefault();
 
     if (!destination) {
-      toast.error(t("please_fill_required_fields") || "Vui lòng điền Nơi mang đến!");
+      toast.error(t("please_fill_required_fields"));
       return;
     }
 
     // Filter out invalid items
     const validItems = itemsList.filter(i => i.name.trim() !== "");
     if (validItems.length === 0) {
-      toast.error(t("please_add_at_least_one_item") || "Vui lòng nhập ít nhất 1 vật liệu!");
+      toast.error(t("please_add_at_least_one_item"));
       return;
     }
 
@@ -359,6 +373,10 @@ function RequestsPageContent() {
           reason: formReason,
           requesterId: user?.id,
           destination: destination,
+          startDate: startDate,
+          endDate: endDate,
+          carrierEmpno: carrierEmpno,
+          carrierName: carrierName,
           items: validItems,
           flowSnapshot: flowData.length > 0 ? flowData : null,
           parentId: renewParentId,
@@ -373,6 +391,10 @@ function RequestsPageContent() {
         setFormTitle("");
         setFormReason("");
         setDestination("");
+        setStartDate("");
+        setEndDate("");
+        setCarrierEmpno("");
+        setCarrierName("");
         setItemsList([{ name: "", quantity: "", unit: "", purpose: "" }]);
         fetchData(); // Reload
       } else {
@@ -404,42 +426,16 @@ function RequestsPageContent() {
     }
   };
 
-  // Delete / Cancel request (only for Draft/Pending requests created by this user)
-  const handleDeleteRequest = async (requestId: number) => {
-    setConfirmModal({
-      isOpen: true,
-      title: t("confirm_cancel_request") || "Xác nhận hủy đơn",
-      message: t("confirm_cancel_desc") || "Bạn có chắc chắn muốn hủy yêu cầu này không? Hành động này không thể hoàn tác.",
-      confirmText: t("cancel") || "Hủy đơn",
-      isDanger: true,
-      onConfirm: async () => {
-        try {
-          const res = await apiFetch(`/api/requests/${requestId}`, {
-            method: "DELETE"
-          });
-          const data = await res.json();
-          if (data.success) {
-            toast.success(t("request_cancel_success"));
-            fetchData(); // Reload
-          } else {
-            toast.error(data.error || t("request_cancel_failed"));
-          }
-        } catch (err) {
-          console.error(err);
-          toast.error(t("conn_failed"));
-        }
-      }
-    });
-  };
+
 
   // Direct Approve / Reject actions from row (Admin or Reviewer only)
   const handleDirectApprove = async (requestId: number) => {
     if (!user) return;
     setConfirmModal({
       isOpen: true,
-      title: t("btn_approve") || "Phê duyệt yêu cầu",
-      message: t("confirm_approve_request") || "Bạn có chắc chắn muốn phê duyệt yêu cầu này?",
-      confirmText: t("btn_approve") || "Phê duyệt",
+      title: t("btn_approve"),
+      message: t("confirm_approve_request"),
+      confirmText: t("btn_approve"),
       isDanger: false,
       onConfirm: async () => {
         try {
@@ -639,6 +635,13 @@ function RequestsPageContent() {
     });
   }, [requests, statusFilter, searchQuery, user, selectedCodesFilter, selectedTimesFilter, selectedAreasFilter, selectedPeopleFilter, selectedRequestersFilter, selectedStatusesFilter]);
 
+  const totalPages = Math.ceil(filteredRequests.length / pageSize);
+  const paginatedRequests = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return filteredRequests.slice(start, start + pageSize);
+  }, [filteredRequests, currentPage, pageSize]);
+
+
   const handleStatusMouseEnter = (item: RequestItem, e: React.MouseEvent<HTMLDivElement>) => {
     const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
     setTooltipPos({ x: rect.left + rect.width / 2, y: rect.top - 10 });
@@ -735,21 +738,21 @@ function RequestsPageContent() {
               
               if (log) {
                 if (log.action === "approved") {
-                  statusText = t("btn_approve") || "Đã duyệt";
+                  statusText = t("btn_approve");
                   statusColor = "#10b981";
                 } else {
-                  statusText = t("btn_reject") || "Từ chối";
+                  statusText = t("btn_reject");
                   statusColor = "#ef4444";
                 }
               } else {
                 if (req.status === 3 && req.currentLvlCode === step.lvl_code) {
-                  statusText = t("btn_reject") || "Từ chối";
+                  statusText = t("btn_reject");
                   statusColor = "#ef4444";
                 } else if (req.status === 1 && req.currentLvlCode === step.lvl_code) {
                   statusText = t("status_pending_appr");
                   statusColor = "var(--accent-primary)";
                 } else if ((req.status === 2) || (currentLvlIdx > -1 && idx < currentLvlIdx)) {
-                  statusText = t("btn_approve") || "Đã duyệt";
+                  statusText = t("btn_approve");
                   statusColor = "#10b981";
                 } else {
                   isNotReached = true;
@@ -813,15 +816,6 @@ function RequestsPageContent() {
 
   return (
     <main className={styles.main}>
-      <div className={styles.pageHeader}>
-        <div style={{ display: "flex", gap: "10px" }}>
-          <button className={styles.btnPrimary} onClick={() => setShowCreateDrawer(true)}>
-            <Plus size={16} weight="bold" />
-            <span>{t("create_request")}</span>
-          </button>
-        </div>
-      </div>
-
       {/* Actions Toolbar */}
       <div className={styles.actionRow}>
         <div className={styles.filterTabs}>
@@ -891,14 +885,9 @@ function RequestsPageContent() {
             <ArrowCounterClockwise size={14} weight="bold" />
             <span>{t("refresh")}</span>
           </button>
-          <button 
-            className={styles.btnOutline} 
-            onClick={handleExportCSV} 
-            title={t("export_csv") || "Xuất CSV"} 
-            style={{ display: "flex", alignItems: "center", gap: "0.375rem" }}
-          >
-            <FileCsv size={14} weight="bold" />
-            <span>{t("export_csv") || "Xuất CSV"}</span>
+          <button className={styles.btnPrimary} onClick={() => setShowCreateDrawer(true)}>
+            <Plus size={16} weight="bold" />
+            <span>{t("create_request")}</span>
           </button>
         </div>
       </div>
@@ -990,7 +979,7 @@ function RequestsPageContent() {
                 </th>
                 <th className={styles.filterableTh}>
                   <div className={styles.thContent}>
-                    <span>{t("request_date")?.toUpperCase() || "REQUEST DATE"}</span>
+                    <span>{t("date_range")?.toUpperCase() || "DATE RANGE"}</span>
                     <div className={styles.filterDropdownContainer}>
                       <button
                         className={`${styles.filterBtn} ${selectedTimesFilter.length > 0 ? styles.filterBtnActive : ""}`}
@@ -1069,19 +1058,19 @@ function RequestsPageContent() {
                 </th>
                 <th className={styles.filterableTh}>
                   <div className={styles.thContent}>
-                    <span>{t("destination")?.toUpperCase() || "DESTINATION"}</span>
+                    <span>{t("requester").toUpperCase()}</span>
                     <div className={styles.filterDropdownContainer}>
                       <button
-                        className={`${styles.filterBtn} ${selectedAreasFilter.length > 0 ? styles.filterBtnActive : ""}`}
+                        className={`${styles.filterBtn} ${selectedRequestersFilter.length > 0 ? styles.filterBtnActive : ""}`}
                         onClick={(e) => {
                           e.stopPropagation();
-                          setOpenFilterColumn(openFilterColumn === "areas" ? null : "areas");
+                          setOpenFilterColumn(openFilterColumn === "requester" ? null : "requester");
                           setFilterSearchQuery("");
                         }}
                       >
-                        <Funnel size={12} weight={selectedAreasFilter.length > 0 ? "fill" : "regular"} />
+                        <Funnel size={12} weight={selectedRequestersFilter.length > 0 ? "fill" : "regular"} />
                       </button>
-                      {openFilterColumn === "areas" && (
+                      {openFilterColumn === "requester" && (
                         <div className={styles.filterDropdown} onClick={e => e.stopPropagation()}>
                           <input
                             type="text"
@@ -1094,33 +1083,33 @@ function RequestsPageContent() {
                             <label className={styles.filterOption}>
                               <input
                                 type="checkbox"
-                                checked={selectedAreasFilter.length === uniqueAreas.length && uniqueAreas.length > 0}
+                                checked={selectedRequestersFilter.length === uniqueRequesters.length && uniqueRequesters.length > 0}
                                 onChange={() => {
-                                  if (selectedAreasFilter.length === uniqueAreas.length) {
-                                    setSelectedAreasFilter([]);
+                                  if (selectedRequestersFilter.length === uniqueRequesters.length) {
+                                    setSelectedRequestersFilter([]);
                                   } else {
-                                    setSelectedAreasFilter(uniqueAreas);
+                                    setSelectedRequestersFilter(uniqueRequesters);
                                   }
                                 }}
                               />
                               <span>({t("select_all").toLowerCase()})</span>
                             </label>
-                            {uniqueAreas
-                              .filter(area => area.toLowerCase().includes(filterSearchQuery.toLowerCase()))
-                              .map(area => (
-                                <label key={area} className={styles.filterOption}>
+                            {uniqueRequesters
+                              .filter(reqName => reqName.toLowerCase().includes(filterSearchQuery.toLowerCase()))
+                              .map(reqName => (
+                                <label key={reqName} className={styles.filterOption}>
                                   <input
                                     type="checkbox"
-                                    checked={selectedAreasFilter.includes(area)}
+                                    checked={selectedRequestersFilter.includes(reqName)}
                                     onChange={() => {
-                                      setSelectedAreasFilter(prev =>
-                                        prev.includes(area)
-                                          ? prev.filter(a => a !== area)
-                                          : [...prev, area]
+                                      setSelectedRequestersFilter(prev =>
+                                        prev.includes(reqName)
+                                          ? prev.filter(r => r !== reqName)
+                                          : [...prev, reqName]
                                       );
                                     }}
                                   />
-                                  <span title={area}>{area}</span>
+                                  <span title={reqName}>{reqName}</span>
                                 </label>
                               ))}
                           </div>
@@ -1128,7 +1117,7 @@ function RequestsPageContent() {
                             <button
                               className={styles.filterActionBtn}
                               onClick={() => {
-                                setSelectedAreasFilter([]);
+                                setSelectedRequestersFilter([]);
                                 setOpenFilterColumn(null);
                               }}
                             >
@@ -1227,19 +1216,19 @@ function RequestsPageContent() {
                 </th>
                 <th className={styles.filterableTh}>
                   <div className={styles.thContent}>
-                    <span>{t("requester").toUpperCase()}</span>
+                    <span>{t("destination")?.toUpperCase() || "DESTINATION"}</span>
                     <div className={styles.filterDropdownContainer}>
                       <button
-                        className={`${styles.filterBtn} ${selectedRequestersFilter.length > 0 ? styles.filterBtnActive : ""}`}
+                        className={`${styles.filterBtn} ${selectedAreasFilter.length > 0 ? styles.filterBtnActive : ""}`}
                         onClick={(e) => {
                           e.stopPropagation();
-                          setOpenFilterColumn(openFilterColumn === "requester" ? null : "requester");
+                          setOpenFilterColumn(openFilterColumn === "areas" ? null : "areas");
                           setFilterSearchQuery("");
                         }}
                       >
-                        <Funnel size={12} weight={selectedRequestersFilter.length > 0 ? "fill" : "regular"} />
+                        <Funnel size={12} weight={selectedAreasFilter.length > 0 ? "fill" : "regular"} />
                       </button>
-                      {openFilterColumn === "requester" && (
+                      {openFilterColumn === "areas" && (
                         <div className={styles.filterDropdown} onClick={e => e.stopPropagation()}>
                           <input
                             type="text"
@@ -1252,33 +1241,33 @@ function RequestsPageContent() {
                             <label className={styles.filterOption}>
                               <input
                                 type="checkbox"
-                                checked={selectedRequestersFilter.length === uniqueRequesters.length && uniqueRequesters.length > 0}
+                                checked={selectedAreasFilter.length === uniqueAreas.length && uniqueAreas.length > 0}
                                 onChange={() => {
-                                  if (selectedRequestersFilter.length === uniqueRequesters.length) {
-                                    setSelectedRequestersFilter([]);
+                                  if (selectedAreasFilter.length === uniqueAreas.length) {
+                                    setSelectedAreasFilter([]);
                                   } else {
-                                    setSelectedRequestersFilter(uniqueRequesters);
+                                    setSelectedAreasFilter(uniqueAreas);
                                   }
                                 }}
                               />
                               <span>({t("select_all").toLowerCase()})</span>
                             </label>
-                            {uniqueRequesters
-                              .filter(reqName => reqName.toLowerCase().includes(filterSearchQuery.toLowerCase()))
-                              .map(reqName => (
-                                <label key={reqName} className={styles.filterOption}>
+                            {uniqueAreas
+                              .filter(area => area.toLowerCase().includes(filterSearchQuery.toLowerCase()))
+                              .map(area => (
+                                <label key={area} className={styles.filterOption}>
                                   <input
                                     type="checkbox"
-                                    checked={selectedRequestersFilter.includes(reqName)}
+                                    checked={selectedAreasFilter.includes(area)}
                                     onChange={() => {
-                                      setSelectedRequestersFilter(prev =>
-                                        prev.includes(reqName)
-                                          ? prev.filter(r => r !== reqName)
-                                          : [...prev, reqName]
+                                      setSelectedAreasFilter(prev =>
+                                        prev.includes(area)
+                                          ? prev.filter(a => a !== area)
+                                          : [...prev, area]
                                       );
                                     }}
                                   />
-                                  <span title={reqName}>{reqName}</span>
+                                  <span title={area}>{area}</span>
                                 </label>
                               ))}
                           </div>
@@ -1286,7 +1275,7 @@ function RequestsPageContent() {
                             <button
                               className={styles.filterActionBtn}
                               onClick={() => {
-                                setSelectedRequestersFilter([]);
+                                setSelectedAreasFilter([]);
                                 setOpenFilterColumn(null);
                               }}
                             >
@@ -1389,14 +1378,14 @@ function RequestsPageContent() {
                     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "1rem", padding: "4rem 0" }}>
                       <div className={styles.spin} style={{ width: "32px", height: "32px", border: "3px solid var(--accent-primary)", borderTopColor: "transparent", borderRadius: "50%" }}></div>
                       <div style={{ color: "var(--text-secondary)", fontSize: "0.85rem", fontFamily: "ui-monospace, SFMono-Regular, monospace" }}>
-                        {t("loading_data") || "Đang tải dữ liệu..."}
+                        {t("loading_data")}
                       </div>
                     </div>
                   </td>
                 </tr>
               ) : (
                 <>
-                  {filteredRequests.map((item, index) => (
+                  {paginatedRequests.map((item, index) => (
                 <tr
                   key={`${item.id}-${index}`}
                   onClick={() => handleViewDetails(item)}
@@ -1406,12 +1395,21 @@ function RequestsPageContent() {
                     {item.requestCode || `#${item.id}`}
                   </td>
                   <td>
-                    <div style={{ fontWeight: 600, color: "var(--text-primary)" }}>{item.requestDate || item.startDate}</div>
+                    <div style={{ fontWeight: 600, color: "var(--text-primary)" }}>{item.startDate || item.requestDate} ➜ {item.endDate || item.requestDate}</div>
+                    <div style={{ fontSize: "0.75rem", color: "var(--text-secondary)" }}>{t("request_date")}: {item.requestDate}</div>
                   </td>
                   <td>
-                    <div style={{ fontWeight: 600, color: "var(--text-primary)" }}>
-                      {item.destination}
+                    <div style={{ fontWeight: 700, color: "var(--text-primary)" }}>{item.requesterName}</div>
+                    <div style={{ fontSize: "0.75rem", color: "var(--text-secondary)", marginTop: "2px", fontFamily: "ui-monospace, SFMono-Regular, monospace" }}>
+                      {item.requesterEmpno ? `ID: ${item.requesterEmpno}` : ""}
+                      {item.requesterEmpno && item.requesterDept ? " | " : ""}
+                      {item.requesterDept || "N/A"}
                     </div>
+                    {(item.carrierName || item.carrierEmpno) && (
+                      <div style={{ marginTop: "4px", paddingTop: "4px", borderTop: "1px dashed var(--glass-border)", fontSize: "0.75rem", color: "var(--accent-primary)" }}>
+                        <span style={{ fontWeight: 600 }}>{t("carrier_info")}:</span> {item.carrierEmpno} {item.carrierName}
+                      </div>
+                    )}
                   </td>
                   <td>
                     {item.items && item.items.length > 0 ? (
@@ -1426,7 +1424,7 @@ function RequestsPageContent() {
                         ))}
                         {item.items.length > 2 && (
                           <div style={{ fontSize: "0.75rem", color: "var(--accent-primary)", fontWeight: "600", fontStyle: "italic", marginTop: "2px" }}>
-                            + {item.items.length - 2} {t("others") || "vật khác"}...
+                            + {item.items.length - 2} {t("others")}...
                           </div>
                         )}
                       </div>
@@ -1435,11 +1433,8 @@ function RequestsPageContent() {
                     )}
                   </td>
                   <td>
-                    <div style={{ fontWeight: 700, color: "var(--text-primary)" }}>{item.requesterName}</div>
-                    <div style={{ fontSize: "0.75rem", color: "var(--text-secondary)", marginTop: "2px", fontFamily: "ui-monospace, SFMono-Regular, monospace" }}>
-                      {item.requesterEmpno ? `ID: ${item.requesterEmpno}` : ""}
-                      {item.requesterEmpno && item.requesterDept ? " | " : ""}
-                      {item.requesterDept || "N/A"}
+                    <div style={{ fontWeight: 600, color: "var(--text-primary)" }}>
+                      {item.destination}
                     </div>
                   </td>
                   <td style={{ position: "relative" }}>
@@ -1582,7 +1577,7 @@ function RequestsPageContent() {
                               <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                                 <span style={{ width: "7px", height: "7px", borderRadius: "50%", background: "#ef4444", display: "inline-block", flexShrink: 0, boxShadow: "0 0 6px rgba(239,68,68,0.6)" }} />
                                 <span style={{ fontSize: "9px", fontWeight: "700", color: "#ef4444", textTransform: "uppercase", letterSpacing: "0.07em" }}>
-                                  {language === 'vi' ? 'LÝ DO TỪ CHỐI' : 'REJECTION REASON'}
+                                  {t("rejection_reason")}
                                 </span>
                               </div>
                               <div style={{ fontWeight: "600", color: "var(--text-primary)", fontSize: "13px", paddingLeft: "13px", whiteSpace: "pre-wrap" }}>
@@ -1603,7 +1598,7 @@ function RequestsPageContent() {
                         e.stopPropagation();
                         setShowHistoryModal(item);
                       }}
-                      title={t("view_history") || "Xem lộ trình"}
+                      title={t("view_history")}
                     >
                       <ListBullets size={16} weight="bold" />
                     </button>
@@ -1643,6 +1638,42 @@ function RequestsPageContent() {
         </div>
       </div>
 
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "1rem", padding: "0 1rem", marginBottom: "1.5rem" }}>
+        <button 
+          className={styles.btnOutline} 
+          onClick={handleExportCSV} 
+          title={t("export_csv")} 
+          style={{ display: "flex", alignItems: "center", gap: "0.375rem" }}
+        >
+          <FileCsv size={14} weight="bold" />
+          <span>{t("export_csv")}</span>
+        </button>
+
+        {totalPages > 1 && (
+          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+            <span style={{ fontSize: "0.875rem", color: "var(--text-secondary)", marginRight: "0.5rem" }}>
+              {t("page") || "Trang"} {currentPage} / {totalPages}
+            </span>
+            <button
+              className={styles.btnOutline}
+              style={{ padding: "0.25rem 0.5rem", minWidth: "32px" }}
+              disabled={currentPage === 1}
+              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+            >
+              &lt;
+            </button>
+            <button
+              className={styles.btnOutline}
+              style={{ padding: "0.25rem 0.5rem", minWidth: "32px" }}
+              disabled={currentPage === totalPages}
+              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+            >
+              &gt;
+            </button>
+          </div>
+        )}
+      </div>
+
       {/* ── CREATE REQUEST SLIDE-OUT DRAWER ──────────────── */}
       <CreateRequestDrawer
         show={showCreateDrawer}
@@ -1655,6 +1686,14 @@ function RequestsPageContent() {
         user={user}
         destination={destination}
         setDestination={setDestination}
+        startDate={startDate}
+        setStartDate={setStartDate}
+        endDate={endDate}
+        setEndDate={setEndDate}
+        carrierEmpno={carrierEmpno}
+        setCarrierEmpno={setCarrierEmpno}
+        carrierName={carrierName}
+        setCarrierName={setCarrierName}
         note={formReason}
         setNote={setFormReason}
         itemsList={itemsList}

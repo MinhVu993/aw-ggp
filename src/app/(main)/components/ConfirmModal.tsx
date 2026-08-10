@@ -1,3 +1,4 @@
+import { useTranslation } from "@/context/LanguageContext";
 import React from 'react';
 import { WarningCircle, CheckCircle } from "@phosphor-icons/react";
 import styles from "../requests.module.css";
@@ -18,6 +19,7 @@ interface ConfirmModalProps {
 }
 
 export default function ConfirmModal({ modal, setModal, t }: ConfirmModalProps) {
+  
   if (!modal.isOpen) return null;
 
   return (
@@ -32,13 +34,13 @@ export default function ConfirmModal({ modal, setModal, t }: ConfirmModalProps) 
         </p>
         <div style={{ display: "flex", justifyContent: "flex-end", gap: "0.75rem" }}>
           <button className={styles.btnOutline} onClick={() => setModal(prev => ({ ...prev, isOpen: false }))}>
-            {t("cancel") || "Hủy"}
+            {t("cancel")}
           </button>
           <button className={styles.btnPrimary} style={modal.isDanger ? { background: "#ef4444" } : {}} onClick={() => {
             setModal(prev => ({ ...prev, isOpen: false }));
             modal.onConfirm();
           }}>
-            {modal.confirmText || "Xác nhận"}
+            {modal.confirmText || t("confirm")}
           </button>
         </div>
       </div>

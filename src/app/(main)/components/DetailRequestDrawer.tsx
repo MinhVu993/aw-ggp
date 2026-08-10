@@ -1,3 +1,4 @@
+import { useTranslation } from "@/context/LanguageContext";
 import React from 'react';
 import { X, Check, MapPin, Package, Copy } from "@phosphor-icons/react";
 import styles from "../requests.module.css";
@@ -32,7 +33,7 @@ export default function DetailRequestDrawer({
         {/* Header */}
         <div className={styles.drawerHeader}>
           <h2 className={styles.drawerTitle}>
-            {t("access_request") || "Phiếu mang hàng"}{" "}
+            {t("access_request")}{" "}
             <span style={{ fontFamily: "ui-monospace, SFMono-Regular, monospace", fontSize: "1rem", color: "var(--accent-primary)", marginLeft: "0.5rem" }}>
               [{request.requestCode || `#${request.id}`}]
             </span>
@@ -128,15 +129,27 @@ export default function DetailRequestDrawer({
           <div className={styles.formGroup} style={{ marginTop: "0.5rem", flexShrink: 0 }}>
             <label className={styles.formLabel}>
               <MapPin size={14} style={{ display: "inline", marginRight: "4px" }} />
-              {t("destination") || "Nơi mang đến"}
+              {t("destination")}
             </label>
             <input type="text" className={styles.formInput} value={request.destination || "—"} readOnly />
+          </div>
+
+          {/* ── Date Range & Carrier ── */}
+          <div style={{ display: "flex", gap: "1rem", marginTop: "0.5rem", flexShrink: 0 }}>
+            <div className={styles.formGroup} style={{ flex: 1 }}>
+              <label className={styles.formLabel}>{t("date_range")}</label>
+              <input type="text" className={styles.formInput} value={`${request.startDate || request.requestDate || "—"}  ➜  ${request.endDate || request.requestDate || "—"}`} readOnly style={{ fontFamily: "ui-monospace, SFMono-Regular, monospace", color: "var(--accent-primary)", fontWeight: "600" }} />
+            </div>
+            <div className={styles.formGroup} style={{ flex: 1 }}>
+              <label className={styles.formLabel}>{t("carrier_info")}</label>
+              <input type="text" className={styles.formInput} value={`${request.carrierEmpno || ""} ${request.carrierName ? `- ${request.carrierName}` : "—"}`} readOnly />
+            </div>
           </div>
 
           {/* ── Additional Info (Note) ── */}
           {request.reason && (
             <div className={`${styles.formGroup} ${styles.formGroupFull}`} style={{ flexShrink: 0, marginTop: "1rem", marginBottom: 0 }}>
-              <label className={styles.formLabel} style={{ marginBottom: "4px" }}>{t("note") || "Ghi chú thêm"}</label>
+              <label className={styles.formLabel} style={{ marginBottom: "4px" }}>{t("note")}</label>
               <textarea className={styles.formTextarea} value={request.reason} readOnly rows={2} style={{ minHeight: "auto", padding: "8px 12px", resize: "vertical" }} />
             </div>
           )}
@@ -145,7 +158,7 @@ export default function DetailRequestDrawer({
           {request.status === 4 && request.returnReason && (
             <div style={{ marginTop: "1rem", padding: "1rem", border: "1px solid #f59e0b", borderRadius: "6px", backgroundColor: "rgba(245,158,11,0.05)" }}>
               <h4 style={{ margin: "0 0 0.5rem 0", color: "#d97706", fontSize: "0.85rem", fontWeight: 700, display: "flex", alignItems: "center", gap: "6px" }}>
-                <X size={16} weight="bold" /> Lý do yêu cầu sửa đổi
+                <X size={16} weight="bold" /> {t("rejection_reason")}
               </h4>
               <p style={{ margin: 0, fontSize: "0.9rem", color: "var(--text-primary)" }}>{request.returnReason}</p>
             </div>
@@ -154,7 +167,7 @@ export default function DetailRequestDrawer({
           {request.status === 3 && request.rejectReason && (
             <div style={{ marginTop: "1rem", padding: "1rem", border: "1px solid #ef4444", borderRadius: "6px", backgroundColor: "rgba(239,68,68,0.05)" }}>
               <h4 style={{ margin: "0 0 0.5rem 0", color: "#dc2626", fontSize: "0.85rem", fontWeight: 700, display: "flex", alignItems: "center", gap: "6px" }}>
-                <X size={16} weight="bold" /> Lý do từ chối
+                <X size={16} weight="bold" /> {t("rejection_reason")}
               </h4>
               <p style={{ margin: 0, fontSize: "0.9rem", color: "var(--text-primary)" }}>{request.rejectReason}</p>
             </div>
@@ -164,16 +177,16 @@ export default function DetailRequestDrawer({
           <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem", flex: "1 1 auto", minHeight: 0, marginTop: "1rem" }}>
             <div className={styles.formSectionTitle} style={{ marginBottom: "0" }}>
               <Package size={18} weight="bold" color="var(--accent-primary)" />
-              {t("items_list") || "Danh sách Vật liệu"} ({request.items?.length || request.itemCount || 0})
+              {t("items_list")} ({request.items?.length || request.itemCount || 0})
             </div>
             <div className={styles.horizontalScroll} style={{ flex: 1, overflowY: "auto", border: "1px solid var(--glass-border)", borderRadius: "4px", background: "var(--bg-secondary)" }}>
               <table className={styles.table} style={{ margin: 0, width: "100%" }}>
                 <thead style={{ position: "sticky", top: 0, zIndex: 1, background: "var(--bg-tertiary)" }}>
                   <tr>
-                    <th style={{ padding: "10px 16px", borderBottom: "1px solid var(--glass-border)" }}>{t("item_name") || "Tên vật tư"}</th>
+                    <th style={{ padding: "10px 16px", borderBottom: "1px solid var(--glass-border)" }}>{t("item_name")}</th>
                     <th style={{ padding: "10px 16px", borderBottom: "1px solid var(--glass-border)", width: "15%" }}>{t("quantity") || "SL"}</th>
-                    <th style={{ padding: "10px 16px", borderBottom: "1px solid var(--glass-border)", width: "15%" }}>{t("unit") || "ĐVT"}</th>
-                    <th style={{ padding: "10px 16px", borderBottom: "1px solid var(--glass-border)", width: "35%" }}>{t("purpose") || "Mục đích"}</th>
+                    <th style={{ padding: "10px 16px", borderBottom: "1px solid var(--glass-border)", width: "15%" }}>{t("unit")}</th>
+                    <th style={{ padding: "10px 16px", borderBottom: "1px solid var(--glass-border)", width: "35%" }}>{t("purpose")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -188,7 +201,7 @@ export default function DetailRequestDrawer({
                   {(!request.items || request.items.length === 0) && (
                     <tr>
                       <td colSpan={4} style={{ textAlign: "center", padding: "1rem", color: "var(--text-secondary)" }}>
-                        Không có dữ liệu vật tư chi tiết
+                        {t("no_item_data")}
                       </td>
                     </tr>
                   )}
@@ -212,11 +225,11 @@ export default function DetailRequestDrawer({
                 gap: "0.375rem"
               }}>
                 <Check size={14} weight="bold" color="#10b981" />
-                {t("renewed_by") || "Đã gia hạn bởi"} {request.renewedToCode}
+                {t("renewed_by")} {request.renewedToCode}
               </span>
             ) : (
               <button type="button" className={styles.btnOutline} onClick={() => onRenew(request)} style={{ display: "flex", alignItems: "center", gap: "0.5rem", color: "var(--accent-primary)", borderColor: "var(--accent-primary)" }}>
-                <Copy size={16} weight="bold" /> {t("renew") || "Gia hạn / Copy đơn"}
+                <Copy size={16} weight="bold" /> {t("renew")}
               </button>
             )
           )}

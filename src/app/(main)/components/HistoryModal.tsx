@@ -1,3 +1,4 @@
+import { useTranslation } from "@/context/LanguageContext";
 import React from 'react';
 import { Clock, X } from "@phosphor-icons/react";
 import styles from "../requests.module.css";
@@ -11,6 +12,7 @@ interface HistoryModalProps {
 }
 
 export default function HistoryModal({ request, onClose, t, language }: HistoryModalProps) {
+  
   if (!request) return null;
 
   const renderHistoryTable = (req: RequestItem) => {
@@ -37,21 +39,21 @@ export default function HistoryModal({ request, onClose, t, language }: HistoryM
               
               if (log) {
                 if (log.action === "approved") {
-                  statusText = t("btn_approve") || "Đã duyệt";
+                  statusText = t("btn_approve");
                   statusColor = "#10b981";
                 } else {
-                  statusText = t("btn_reject") || "Từ chối";
+                  statusText = t("btn_reject");
                   statusColor = "#ef4444";
                 }
               } else {
                 if (req.status === 3 && req.currentLvlCode === step.lvl_code) {
-                  statusText = t("btn_reject") || "Từ chối";
+                  statusText = t("btn_reject");
                   statusColor = "#ef4444";
                 } else if (req.status === 1 && req.currentLvlCode === step.lvl_code) {
                   statusText = t("status_pending_appr");
                   statusColor = "var(--accent-primary)";
                 } else if ((req.status === 2) || (currentLvlIdx > -1 && idx < currentLvlIdx)) {
-                  statusText = t("btn_approve") || "Đã duyệt";
+                  statusText = t("btn_approve");
                   statusColor = "#10b981";
                 } else {
                   isNotReached = true;
@@ -117,7 +119,7 @@ export default function HistoryModal({ request, onClose, t, language }: HistoryM
         <div className={styles.modalHeader}>
           <h3 className={styles.modalTitle}>
             <Clock size={18} weight="bold" style={{ marginRight: "8px", color: "var(--accent-primary)" }} />
-            {t("approval_history") || "Lộ trình & Lịch sử phê duyệt"}
+            {t("approval_history")}
           </h3>
           <button className={styles.closeButton} onClick={onClose}>
             <X size={16} weight="bold" />

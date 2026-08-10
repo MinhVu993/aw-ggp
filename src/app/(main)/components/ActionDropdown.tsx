@@ -1,4 +1,6 @@
 "use client";
+import { useTranslation } from "@/context/LanguageContext";
+
 
 import React, { useState, useRef, useEffect } from "react";
 import { 
@@ -39,6 +41,7 @@ export default function ActionDropdown({
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
+  const { t } = useTranslation();
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsOpen(false);
       }
@@ -77,7 +80,7 @@ export default function ActionDropdown({
           background: isOpen ? "rgba(255,255,255,0.1)" : "var(--bg-primary)",
           color: "var(--text-primary)"
         }}
-        title="Thao tác"
+        title={t("col_action")}
       >
         <DotsThreeVertical size={20} weight="bold" />
       </button>
@@ -113,7 +116,7 @@ export default function ActionDropdown({
                 onMouseLeave={e => e.currentTarget.style.background = "transparent"}
               >
                 <Check size={16} weight="bold" />
-                <span>{t("btn_approve") || "Phê duyệt"}</span>
+                <span>{t("btn_approve")}</span>
               </button>
               <button
                 onClick={(e) => handleAction(e, () => onReject(item.id))}
@@ -126,7 +129,7 @@ export default function ActionDropdown({
                 onMouseLeave={e => e.currentTarget.style.background = "transparent"}
               >
                 <X size={16} weight="bold" />
-                <span>{t("btn_reject") || "Từ chối"}</span>
+                <span>{t("btn_reject")}</span>
               </button>
               <div style={{ height: "1px", background: "var(--glass-border)", margin: "4px 0" }} />
             </>
@@ -143,7 +146,7 @@ export default function ActionDropdown({
             onMouseLeave={e => e.currentTarget.style.background = "transparent"}
           >
             <ClipboardText size={16} />
-            <span>{t("details") || "Chi tiết"}</span>
+            <span>{t("details")}</span>
           </button>
 
           {isRenewable && !item.renewedToCode && (
@@ -158,7 +161,7 @@ export default function ActionDropdown({
               onMouseLeave={e => e.currentTarget.style.background = "transparent"}
             >
               <Copy size={16} />
-              <span>{t("renew") || "Gia hạn"}</span>
+              <span>{t("renew")}</span>
             </button>
           )}
 
@@ -175,7 +178,7 @@ export default function ActionDropdown({
             onMouseLeave={e => e.currentTarget.style.background = "transparent"}
           >
             <Printer size={16} />
-            <span>{t("print") || "In Phiếu"}</span>
+            <span>{t("print")}</span>
           </button>
         </div>
       )}
