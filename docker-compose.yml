@@ -15,7 +15,7 @@ services:
     environment:
       - NODE_ENV=production
       - NEXT_PUBLIC_BASE_PATH=/ps/ggp
-      - DATABASE_URL=postgresql://postgres:admin@10.13.34.166:7604/ggp_db
+      - DATABASE_URL=postgresql://postgres:abcd%401234@10.13.34.188:5432/ggp_db
       - MYSQL_HOST=10.1.16.89
       - TZ=Asia/Ho_Chi_Minh
     volumes:

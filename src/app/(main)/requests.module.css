@@ -308,7 +308,7 @@
 .tableWrapper {
   overflow-x: auto;
   overflow-y: auto;
-  max-height: calc(100vh - 350px);
+  max-height: 90vh;
 }
 
 .table {

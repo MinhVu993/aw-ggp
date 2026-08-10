@@ -2,6 +2,7 @@
 
 import React from "react";
 import { RequestItem } from "../types";
+import { QRCodeSVG } from 'qrcode.react';
 
 export default function PrintTemplate({ request, id }: { request: RequestItem | null; id: string }) {
   if (!request) return <div id={id} style={{ display: "none" }} />;
@@ -73,6 +74,12 @@ export default function PrintTemplate({ request, id }: { request: RequestItem | 
             margin-top: 10px;
             font-size: 12pt;
           }
+          .qr-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+          }
         }
       `}} />
 
@@ -90,16 +97,23 @@ export default function PrintTemplate({ request, id }: { request: RequestItem | 
               <div className="title-text">PHIẾU MANG HÀNG RA NGOÀI</div>
               <div className="subtitle-text">物品攜出單</div>
             </td>
-            <td style={{ width: "20%" }}>Ngày thiết lập (sửa đổi)<br/>制訂日期</td>
-            <td style={{ width: "20%" }}>18.11.2023</td>
+            <td rowSpan={3} style={{ width: "20%" }}>
+              {request.status === 2 && request.requestCode ? (
+                <div className="qr-container">
+                  <QRCodeSVG value={request.requestCode} size={90} />
+                  <div style={{ fontSize: '10pt', marginTop: '4px' }}>{request.requestCode}</div>
+                </div>
+              ) : (
+                <div style={{ color: '#ef4444', fontWeight: 'bold' }}>CHƯA ĐƯỢC DUYỆT</div>
+              )}
+            </td>
+            <td style={{ width: "20%" }}>Ngày thiết lập<br/>制訂日期<br/>18.11.2023</td>
           </tr>
           <tr>
-            <td>Mã số tài liệu<br/>文件編號</td>
-            <td>AWM-4-FAC04-02</td>
+            <td>Mã số tài liệu<br/>文件編號<br/>AWM-4-FAC04-02</td>
           </tr>
           <tr>
-            <td>Phiên bản 版本<br/>3</td>
-            <td>Trang 頁次<br/>1/1</td>
+            <td>Phiên bản 版本: 3<br/>Trang 頁次: 1/1</td>
           </tr>
 
           {/* Date & NO */}

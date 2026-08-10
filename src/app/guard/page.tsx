@@ -59,7 +59,7 @@ export default function GuardPage() {
       requestCode: "GGP-20231010-001",
       applicantName: "Nguyễn Văn A",
       applicantDept: "PCC",
-      destination: "",
+      destination: "abc",
       status: "APPROVED_WAITING_GATE",
       qrExpiresAt: new Date(Date.now() + 3600000).toISOString(), // 1 hour from now
       isQrUsed: false,
@@ -121,7 +121,7 @@ export default function GuardPage() {
         </p>
 
         {/* Guard Session Info Badge from AuthComp */}
-        {user && (
+        {/* {user && (
           <div style={{
             display: "inline-flex",
             alignItems: "center",
@@ -137,7 +137,7 @@ export default function GuardPage() {
             <ShieldCheck size={18} color="var(--accent-primary)" />
             <span>Bảo vệ trực ca: <strong style={{ color: "var(--text-primary)" }}>{user.empno ? `${user.empno} - ` : ""}{user.name}</strong></span>
           </div>
-        )}
+        )} */}
       </div>
 
       {!scannedData ? (

@@ -212,27 +212,6 @@ export default function DetailRequestDrawer({
         </div>
 
         <div className={styles.drawerFooter}>
-          {request.requestDate && new Date(request.requestDate) < new Date() && (
-            request.renewedToCode ? (
-              <span style={{ 
-                fontSize: "0.85rem", 
-                color: "var(--text-secondary)", 
-                padding: "0.5rem 1rem", 
-                border: "1px dashed var(--glass-border)",
-                borderRadius: "4px",
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "0.375rem"
-              }}>
-                <Check size={14} weight="bold" color="#10b981" />
-                {t("renewed_by")} {request.renewedToCode}
-              </span>
-            ) : (
-              <button type="button" className={styles.btnOutline} onClick={() => onRenew(request)} style={{ display: "flex", alignItems: "center", gap: "0.5rem", color: "var(--accent-primary)", borderColor: "var(--accent-primary)" }}>
-                <Copy size={16} weight="bold" /> {t("renew")}
-              </button>
-            )
-          )}
           <div style={{ flex: 1 }} />
           <button type="button" className={styles.btnOutline} onClick={onClose}>
             {t("close")}

@@ -15,18 +15,42 @@ export default function QRScanner({ onScanSuccess, loading }: QRScannerProps) {
   const [inputValue, setInputValue] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Focus the input automatically so the scanner can type into it
+  // Focus the input automatically & keep focus no matter where the guard clicks on screen
   useEffect(() => {
-    if (!loading && inputRef.current) {
-      inputRef.current.focus();
-    }
+    const focusInput = () => {
+      if (!loading && inputRef.current) {
+        inputRef.current.focus();
+      }
+    };
+
+    focusInput();
+
+    // Global click listener for any click anywhere on the page/window
+    const handleGlobalClick = () => {
+      focusInput();
+    };
+
+    // Window focus listener when returning to tab/window
+    const handleWindowFocus = () => {
+      focusInput();
+    };
+
+    window.addEventListener("click", handleGlobalClick);
+    window.addEventListener("focus", handleWindowFocus);
+
+    return () => {
+      window.removeEventListener("click", handleGlobalClick);
+      window.removeEventListener("focus", handleWindowFocus);
+    };
   }, [loading]);
 
-  // Keep focus on the input if user clicks elsewhere
-  const handleContainerClick = () => {
-    if (inputRef.current) {
-      inputRef.current.focus();
-    }
+  const handleBlur = () => {
+    // Auto re-focus if blurred
+    setTimeout(() => {
+      if (!loading && inputRef.current) {
+        inputRef.current.focus();
+      }
+    }, 20);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -42,7 +66,6 @@ export default function QRScanner({ onScanSuccess, loading }: QRScannerProps) {
 
   return (
     <div 
-      onClick={handleContainerClick}
       style={{
         background: "rgba(255, 255, 255, 0.05)",
         backdropFilter: "blur(10px)",
@@ -117,6 +140,7 @@ export default function QRScanner({ onScanSuccess, loading }: QRScannerProps) {
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
           onKeyDown={handleKeyDown}
+          onBlur={handleBlur}
           placeholder={t("scanner_placeholder")}
           style={{
             width: "100%",

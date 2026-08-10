@@ -6,6 +6,7 @@
 -- =============================================================================
 
 -- Clean up existing tables if re-running
+DROP TABLE IF EXISTS goods_out_destinations CASCADE;
 DROP TABLE IF EXISTS goods_out_gate_scans CASCADE;
 DROP TABLE IF EXISTS goods_out_approval_logs CASCADE;
 DROP TABLE IF EXISTS goods_out_items CASCADE;
@@ -139,10 +140,27 @@ CREATE TABLE goods_out_gate_scans (
   scanned_qr_token TEXT NOT NULL,       -- Chuỗi Token đọc từ kính quét QR
   scan_result TEXT NOT NULL CHECK (scan_result IN ('PASSED', 'EXPIRED', 'ALREADY_USED', 'INVALID_TOKEN')),
   note TEXT,                            -- Ghi chú đối soát (ví dụ: Vật liệu đúng 100% theo phiếu)
-  
   scanned_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 CREATE INDEX idx_gate_scans_request_id ON goods_out_gate_scans(request_id);
 CREATE INDEX idx_gate_scans_guard_empno ON goods_out_gate_scans(security_guard_empno);
 CREATE INDEX idx_gate_scans_scanned_at ON goods_out_gate_scans(scanned_at DESC);
+
+-- -----------------------------------------------------------------------------
+-- 5. BẢNG MASTER: DANH MỤC NƠI MANG ĐẾN (goods_out_destinations)
+-- -----------------------------------------------------------------------------
+CREATE TABLE goods_out_destinations (
+  destination_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  destination_name TEXT NOT NULL UNIQUE,  -- Tên địa điểm mang đến (ví dụ: Nhà máy 2, Kho Cát Lái...)
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- Seed dữ liệu mẫu mặc định
+INSERT INTO goods_out_destinations (destination_name) VALUES
+  ('Nhà máy 2 (NM2)'),
+  ('Kho Ngoại quan Cát Lái'),
+  ('Công ty TNHH Bao Bì Việt Nam'),
+  ('Văn phòng đại diện TP.HCM')
+ON CONFLICT (destination_name) DO NOTHING;
+

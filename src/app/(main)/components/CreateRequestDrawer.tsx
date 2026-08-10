@@ -12,7 +12,8 @@ interface CreateRequestDrawerProps {
   flowData: any[];
   language: string;
   t: (key: string) => string;
-  user: any;
+  user?: any;
+  destinationsList?: string[];
   destination: string;
   setDestination: (val: string) => void;
   startDate: string;
@@ -42,6 +43,7 @@ export default function CreateRequestDrawer({
   language,
   t,
   user,
+  destinationsList,
   destination,
   setDestination,
   startDate,
@@ -183,25 +185,9 @@ export default function CreateRequestDrawer({
             </div>
           )}
 
-          {/* 1. Destination */}
-          <div className={styles.formGroup} style={{ marginTop: "0.5rem" }}>
-            <label className={styles.formLabel}>
-              <MapPin size={14} style={{ display: "inline", marginRight: "4px" }} />
-              {t("destination")} <span style={{ color: "#ef4444" }}>*</span>
-            </label>
-            <input
-              type="text"
-              className={styles.formInput}
-              required
-              placeholder={t("placeholder_destination")}
-              value={destination}
-              onChange={e => setDestination(e.target.value)}
-            />
-          </div>
-
           {/* Validity & Carrier (Compact Layout) */}
           <div style={{
-            marginTop: "1rem",
+            marginTop: "0.5rem",
             background: "var(--bg-secondary)",
             border: "1px solid var(--glass-border)",
             padding: "1rem",
@@ -251,6 +237,33 @@ export default function CreateRequestDrawer({
             </div>
           </div>
 
+          {/* 1. Destination */}
+          <div className={styles.formGroup} style={{ marginTop: "1rem" }}>
+            <label className={styles.formLabel}>
+              <MapPin size={14} style={{ display: "inline", marginRight: "4px" }} />
+              {t("destination")} <span style={{ color: "#ef4444" }}>*</span>
+            </label>
+            <input
+              list="destination-suggestions-list"
+              type="text"
+              className={styles.formInput}
+              required
+              placeholder={t("placeholder_destination")}
+              value={destination}
+              onChange={e => setDestination(e.target.value)}
+            />
+            <datalist id="destination-suggestions-list">
+              {(destinationsList && destinationsList.length > 0 ? destinationsList : [
+                "Nhà máy 2 (NM2)",
+                "Kho Ngoại quan Cát Lái",
+                "Công ty TNHH Bao Bì Việt Nam",
+                "Văn phòng đại diện TP.HCM"
+              ]).map((dest, idx) => (
+                <option key={idx} value={dest} />
+              ))}
+            </datalist>
+          </div>
+
 
           {/* Note / Ghi chú */}
           <div className={styles.formGroup} style={{ marginTop: "1rem" }}>
@@ -288,7 +301,7 @@ export default function CreateRequestDrawer({
                     className={styles.formInput}
                     style={{ flex: "1", minWidth: "60px" }}
                     type="number"
-                    step="0.001"
+                    step="any"
                     min="0"
                     placeholder={t("quantity")}
                     required

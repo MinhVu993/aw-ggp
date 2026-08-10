@@ -1,7 +1,4 @@
 "use client";
-import { useTranslation } from "@/context/LanguageContext";
-
-
 import React, { useState, useRef, useEffect } from "react";
 import { 
   DotsThreeVertical, 
@@ -41,7 +38,6 @@ export default function ActionDropdown({
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-  const { t } = useTranslation();
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsOpen(false);
       }
@@ -149,21 +145,7 @@ export default function ActionDropdown({
             <span>{t("details")}</span>
           </button>
 
-          {isRenewable && !item.renewedToCode && (
-            <button
-              onClick={(e) => handleAction(e, () => onRenew(item))}
-              style={{
-                display: "flex", alignItems: "center", gap: "0.5rem", padding: "0.5rem 1rem",
-                background: "transparent", border: "none", color: "var(--text-primary)", fontSize: "0.85rem", cursor: "pointer",
-                textAlign: "left", width: "100%"
-              }}
-              onMouseEnter={e => e.currentTarget.style.background = "rgba(255, 255, 255, 0.05)"}
-              onMouseLeave={e => e.currentTarget.style.background = "transparent"}
-            >
-              <Copy size={16} />
-              <span>{t("renew")}</span>
-            </button>
-          )}
+
 
           <div style={{ height: "1px", background: "var(--glass-border)", margin: "4px 0" }} />
 

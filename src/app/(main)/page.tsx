@@ -133,6 +133,19 @@ function RequestsPageContent() {
   const [requestToReject, setRequestToReject] = useState<number | null>(null);
   const [rejectReasonInput, setRejectReasonInput] = useState("");
   const [empSuggestions, setEmpSuggestions] = useState<InternalUser[]>([]);
+  const [savedDestinations, setSavedDestinations] = useState<string[]>([
+    "Nhà máy 2 (NM2)",
+    "Kho Ngoại quan Cát Lái",
+    "Công ty TNHH Bao Bì Việt Nam",
+    "Văn phòng đại diện TP.HCM"
+  ]);
+
+  // Combined unique destination master list
+  const allDestinations = useMemo(() => {
+    const fromRequests = requests.map(r => r.destination).filter(Boolean);
+    const combined = new Set([...savedDestinations, ...fromRequests]);
+    return Array.from(combined).sort();
+  }, [requests, savedDestinations]);
 
   // Unique values for filters
   const uniqueCodes = useMemo(() => {
@@ -153,8 +166,8 @@ function RequestsPageContent() {
   }, [requests]);
 
   const uniqueAreas = useMemo(() => {
-    return Array.from(new Set(requests.map(r => r.destination).filter(Boolean))).sort();
-  }, [requests]);
+    return allDestinations;
+  }, [allDestinations]);
 
   const uniquePeople = useMemo(() => {
     const itemsSet = new Set<string>();
@@ -233,23 +246,14 @@ function RequestsPageContent() {
     if (!user?.empno) return;
     try {
       setFlowLoading(true);
-      const isNotVVG0DV = user.high_dept && user.high_dept !== 'VVG0DV';
       const res = await apiFetch("/api/requests/flow", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           empno: user.empno,
           location: user.location || "vg",
-          app_code: isNotVVG0DV ? "fac_ext" : "fac",
-          dept: user.dept,
-          ...(isNotVVG0DV ? {
-            custom_divisions: {
-              fac_cus_dept: "VVG0DV"
-            },
-            filter_custom_scope_codes: {
-              ras_target_manager: []
-            }
-          } : {})
+          app_code: "fac",
+          dept: user.dept
         })
       });
       const data = await res.json();
@@ -372,6 +376,9 @@ function RequestsPageContent() {
           title: formTitle,
           reason: formReason,
           requesterId: user?.id,
+          requesterEmpno: user?.empno,
+          requesterName: user?.name,
+          requesterDept: user?.dept,
           destination: destination,
           startDate: startDate,
           endDate: endDate,
@@ -387,6 +394,10 @@ function RequestsPageContent() {
       if (data.success) {
         toast.success(t("request_create_success"));
         setShowCreateDrawer(false);
+        // Save new destination into master list if not existing
+        if (destination && !savedDestinations.includes(destination.trim())) {
+          setSavedDestinations(prev => [...prev, destination.trim()]);
+        }
         // Reset form
         setFormTitle("");
         setFormReason("");
@@ -653,23 +664,14 @@ function RequestsPageContent() {
       } else {
         // Fallback: fetch from API (for older records without flowSnapshot)
         setHoveredFlowLoading(true);
-        const isNotVVG0DV = user?.high_dept && user.high_dept !== 'VVG0DV';
         apiFetch(`/api/requests/flow`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             empno: item.requesterEmpno || "038146",
             location: "vg",
-            app_code: isNotVVG0DV ? "fac_ext" : "fac",
-            dept: item.requesterDept,
-            ...(isNotVVG0DV ? {
-              custom_divisions: {
-                fac_cus_dept: "VVG0DV"
-              },
-              filter_custom_scope_codes: {
-                ras_target_manager: []
-              }
-            } : {})
+            app_code: "fac",
+            dept: item.requesterDept
           })
         })
           .then(r => r.json())
@@ -1056,6 +1058,7 @@ function RequestsPageContent() {
                     </div>
                   </div>
                 </th>
+                <th>{t("request_date")?.toUpperCase() || "NGÀY TẠO"}</th>
                 <th className={styles.filterableTh}>
                   <div className={styles.thContent}>
                     <span>{t("requester").toUpperCase()}</span>
@@ -1135,6 +1138,7 @@ function RequestsPageContent() {
                     </div>
                   </div>
                 </th>
+                <th>{t("carrier_info")?.toUpperCase() || "NGƯỜI MANG HÀNG"}</th>
                 <th className={styles.filterableTh}>
                   <div className={styles.thContent}>
                     <span>{t("items")?.toUpperCase() || "ITEMS"}</span>
@@ -1374,7 +1378,7 @@ function RequestsPageContent() {
             <tbody>
               {isLoading ? (
                 <tr>
-                  <td colSpan={8}>
+                  <td colSpan={10}>
                     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "1rem", padding: "4rem 0" }}>
                       <div className={styles.spin} style={{ width: "32px", height: "32px", border: "3px solid var(--accent-primary)", borderTopColor: "transparent", borderRadius: "50%" }}></div>
                       <div style={{ color: "var(--text-secondary)", fontSize: "0.85rem", fontFamily: "ui-monospace, SFMono-Regular, monospace" }}>
@@ -1396,7 +1400,9 @@ function RequestsPageContent() {
                   </td>
                   <td>
                     <div style={{ fontWeight: 600, color: "var(--text-primary)" }}>{item.startDate || item.requestDate} ➜ {item.endDate || item.requestDate}</div>
-                    <div style={{ fontSize: "0.75rem", color: "var(--text-secondary)" }}>{t("request_date")}: {item.requestDate}</div>
+                  </td>
+                  <td>
+                    <div style={{ fontSize: "0.85rem", color: "var(--text-primary)" }}>{item.requestDate}</div>
                   </td>
                   <td>
                     <div style={{ fontWeight: 700, color: "var(--text-primary)" }}>{item.requesterName}</div>
@@ -1405,25 +1411,75 @@ function RequestsPageContent() {
                       {item.requesterEmpno && item.requesterDept ? " | " : ""}
                       {item.requesterDept || "N/A"}
                     </div>
-                    {(item.carrierName || item.carrierEmpno) && (
-                      <div style={{ marginTop: "4px", paddingTop: "4px", borderTop: "1px dashed var(--glass-border)", fontSize: "0.75rem", color: "var(--accent-primary)" }}>
-                        <span style={{ fontWeight: 600 }}>{t("carrier_info")}:</span> {item.carrierEmpno} {item.carrierName}
+                  </td>
+                  <td>
+                    {item.carrierName || item.carrierEmpno ? (
+                      <div style={{ fontSize: "0.85rem", color: "var(--text-primary)" }}>
+                        {item.carrierEmpno} {item.carrierName}
                       </div>
+                    ) : (
+                      <span style={{ color: "var(--text-secondary)" }}>-</span>
                     )}
                   </td>
                   <td>
                     {item.items && item.items.length > 0 ? (
-                      <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                      <div style={{ display: "flex", flexDirection: "column", gap: "5px", minWidth: "180px", maxWidth: "260px" }}>
                         {item.items.slice(0, 2).map((i, idx) => (
-                          <div key={idx} style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-                            <div style={{ fontWeight: 700, color: "var(--text-primary)" }}>{i.name}</div>
-                            <div style={{ fontSize: "0.75rem", color: "var(--text-secondary)", fontFamily: "ui-monospace, SFMono-Regular, monospace" }}>
+                          <div key={idx} style={{ 
+                            display: "flex", 
+                            alignItems: "center", 
+                            justifyContent: "space-between",
+                            gap: "8px", 
+                            background: "rgba(128, 128, 128, 0.04)", 
+                            border: "1px solid var(--glass-border)", 
+                            padding: "4px 8px", 
+                            borderRadius: "4px" 
+                          }}>
+                            <span style={{ 
+                              fontWeight: 600, 
+                              color: "var(--text-primary)", 
+                              fontSize: "0.825rem",
+                              whiteSpace: "nowrap",
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                              flex: 1
+                            }} title={i.name}>
+                              {i.name}
+                            </span>
+                            <span style={{ 
+                              fontSize: "0.725rem", 
+                              fontFamily: "ui-monospace, SFMono-Regular, monospace", 
+                              color: "var(--accent-primary)", 
+                              background: "color-mix(in srgb, var(--accent-primary) 12%, transparent)", 
+                              border: "1px solid color-mix(in srgb, var(--accent-primary) 25%, transparent)",
+                              padding: "1px 6px", 
+                              borderRadius: "3px",
+                              whiteSpace: "nowrap",
+                              fontWeight: 700
+                            }}>
                               {i.quantity} {i.unit}
-                            </div>
+                            </span>
                           </div>
                         ))}
                         {item.items.length > 2 && (
-                          <div style={{ fontSize: "0.75rem", color: "var(--accent-primary)", fontWeight: "600", fontStyle: "italic", marginTop: "2px" }}>
+                          <div 
+                            style={{ 
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "4px",
+                              fontSize: "0.725rem", 
+                              color: "var(--accent-primary)", 
+                              fontWeight: "600", 
+                              cursor: "help",
+                              padding: "2px 6px",
+                              borderRadius: "4px",
+                              background: "color-mix(in srgb, var(--accent-primary) 8%, transparent)",
+                              border: "1px dashed color-mix(in srgb, var(--accent-primary) 30%, transparent)",
+                              width: "fit-content",
+                              marginTop: "2px"
+                            }}
+                            title={`Danh sách vật tư còn lại:\n` + item.items.slice(2).map((it, idx) => `${idx + 3}. ${it.name} (${it.quantity} ${it.unit})`).join("\n")}
+                          >
                             + {item.items.length - 2} {t("others")}...
                           </div>
                         )}
@@ -1622,7 +1678,7 @@ function RequestsPageContent() {
 
               {filteredRequests.length === 0 && (
                 <tr>
-                  <td colSpan={8}>
+                  <td colSpan={10}>
                     <div className={styles.emptyState}>
                       <ClipboardText size={48} weight="light" color="var(--text-secondary)" />
                       <div className={styles.emptyTitle}>{t("no_requests_found")}</div>
@@ -1684,6 +1740,7 @@ function RequestsPageContent() {
         language={language}
         t={t}
         user={user}
+        destinationsList={allDestinations}
         destination={destination}
         setDestination={setDestination}
         startDate={startDate}
