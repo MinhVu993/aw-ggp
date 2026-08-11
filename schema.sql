@@ -6,6 +6,7 @@
 -- =============================================================================
 
 -- Clean up existing tables if re-running
+DROP TABLE IF EXISTS goods_out_units CASCADE;
 DROP TABLE IF EXISTS goods_out_destinations CASCADE;
 DROP TABLE IF EXISTS goods_out_gate_scans CASCADE;
 DROP TABLE IF EXISTS goods_out_approval_logs CASCADE;
@@ -19,10 +20,6 @@ DROP TABLE IF EXISTS goods_out_requests CASCADE;
 CREATE TABLE goods_out_requests (
   request_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   request_no TEXT NOT NULL UNIQUE, -- Mã phiếu hiển thị (ví dụ: GGP-20231118-0001)
-  
-  -- Metadata tài liệu quản lý
-  doc_code TEXT NOT NULL DEFAULT 'AWM-4-FAC04-02',
-  doc_version INT NOT NULL DEFAULT 3,
   
   -- Thông tin người nộp & đơn vị mang ra cổng (Auth Session)
   applicant_empno TEXT NOT NULL,      -- Mã nhân viên người tạo (ví dụ: '045231')
@@ -156,11 +153,45 @@ CREATE TABLE goods_out_destinations (
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
--- Seed dữ liệu mẫu mặc định
+-- Seed dữ liệu địa điểm mặc định
 INSERT INTO goods_out_destinations (destination_name) VALUES
   ('Nhà máy 2 (NM2)'),
   ('Kho Ngoại quan Cát Lái'),
   ('Công ty TNHH Bao Bì Việt Nam'),
   ('Văn phòng đại diện TP.HCM')
 ON CONFLICT (destination_name) DO NOTHING;
+
+-- -----------------------------------------------------------------------------
+-- 6. BẢNG MASTER: DANH MỤC ĐƠN VỊ TÍNH (goods_out_units)
+-- -----------------------------------------------------------------------------
+CREATE TABLE goods_out_units (
+  unit_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  unit_name TEXT NOT NULL UNIQUE,  -- Tên đơn vị tính (ví dụ: Cái, Bộ, Kg, Thùng...)
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- Seed dữ liệu đơn vị tính mặc định
+INSERT INTO goods_out_units (unit_name) VALUES
+  ('Cái'),
+  ('Bộ'),
+  ('Chiếc'),
+  ('Kg'),
+  ('Hộp'),
+  ('Thùng'),
+  ('Cuộn'),
+  ('Thanh'),
+  ('Tấm'),
+  ('Bao'),
+  ('Gói'),
+  ('Chai'),
+  ('Lít'),
+  ('Mét'),
+  ('PCS'),
+  ('SET'),
+  ('BOX'),
+  ('ROLL'),
+  ('KG')
+ON CONFLICT (unit_name) DO NOTHING;
+
+
 

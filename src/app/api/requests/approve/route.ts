@@ -37,6 +37,7 @@ export async function POST(request: Request) {
 
     let stepLevel = 1;
     let stepName = currentLvl;
+    let nextStep = 1;
 
     if (Array.isArray(flowSnapshot) && flowSnapshot.length > 0) {
       // Find current level index
@@ -47,7 +48,10 @@ export async function POST(request: Request) {
         if (approve && currentIndex < flowSnapshot.length - 1) {
           // There is a next level
           nextLvl = flowSnapshot[currentIndex + 1].lvl_code;
+          nextStep = currentIndex + 2;
           newStatus = 'PENDING_DEPT'; // Still pending approval
+        } else if (approve) {
+          nextStep = flowSnapshot.length + 1;
         }
       }
     }
@@ -92,6 +96,11 @@ export async function POST(request: Request) {
     let params: any[] = [];
     let qrToken = null;
 
+    await client.query('ALTER TABLE goods_out_requests ADD COLUMN IF NOT EXISTS qr_code_token VARCHAR(255);');
+    await client.query('ALTER TABLE goods_out_requests ADD COLUMN IF NOT EXISTS qr_generated_at TIMESTAMPTZ;');
+    await client.query('ALTER TABLE goods_out_requests ADD COLUMN IF NOT EXISTS qr_expires_at TIMESTAMPTZ;');
+    await client.query('ALTER TABLE goods_out_requests ADD COLUMN IF NOT EXISTS resubmitted_at TIMESTAMPTZ;');
+
     if (body.action === 'return') {
       newStatus = 'RETURNED';
       updateQuery = `UPDATE goods_out_requests SET status = $1, return_reason = $2 WHERE request_id = $3 RETURNING *`;
@@ -104,11 +113,26 @@ export async function POST(request: Request) {
     } else if (approve) {
       if (newStatus === 'APPROVED_WAITING_GATE') {
         qrToken = randomUUID();
-        updateQuery = `UPDATE goods_out_requests SET status = $1, current_lvl = $2, qr_code = $3 WHERE request_id = $4 RETURNING *`;
-        params = [newStatus, nextLvl, qrToken, requestId];
+        // Calculate expiration (end of end_date, or 24 hours from now)
+        const expQuery = await client.query('SELECT end_date FROM goods_out_requests WHERE request_id = $1', [requestId]);
+        let expiresAt = null;
+        if (expQuery.rows.length > 0 && expQuery.rows[0].end_date) {
+          const d = new Date(expQuery.rows[0].end_date);
+          d.setHours(23, 59, 59, 999);
+          expiresAt = d.toISOString();
+        } else {
+          expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+        }
+
+        updateQuery = `
+          UPDATE goods_out_requests 
+          SET status = $1, current_lvl = $2, qr_code = $3, qr_code_token = $4, qr_generated_at = NOW(), qr_expires_at = $5, current_step = $6 
+          WHERE request_id = $7 RETURNING *
+        `;
+        params = [newStatus, nextLvl, qrToken, qrToken, expiresAt, nextStep, requestId];
       } else {
-        updateQuery = `UPDATE goods_out_requests SET status = $1, current_lvl = $2 WHERE request_id = $3 RETURNING *`;
-        params = [newStatus, nextLvl, requestId];
+        updateQuery = `UPDATE goods_out_requests SET status = $1, current_lvl = $2, current_step = $4 WHERE request_id = $3 RETURNING *`;
+        params = [newStatus, nextLvl, requestId, nextStep];
       }
 
       await client.query(`

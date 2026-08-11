@@ -206,13 +206,33 @@ export default function CreateRequestDrawer({
                 <label className={styles.formLabel} style={{ fontSize: "0.68rem" }}>
                   {t("start_date")} <span style={{ color: "#ef4444" }}>*</span>
                 </label>
-                <input type="date" className={styles.formInput} required value={startDate} onChange={e => setStartDate(e.target.value)} />
+                <input 
+                  type="date" 
+                  className={styles.formInput} 
+                  required 
+                  min={new Date().toISOString().split("T")[0]}
+                  value={startDate} 
+                  onChange={e => {
+                    const val = e.target.value;
+                    setStartDate(val);
+                    if (endDate && val > endDate) {
+                      setEndDate(val);
+                    }
+                  }} 
+                />
               </div>
               <div className={styles.formGroup}>
                 <label className={styles.formLabel} style={{ fontSize: "0.68rem" }}>
                   {t("end_date")} <span style={{ color: "#ef4444" }}>*</span>
                 </label>
-                <input type="date" className={styles.formInput} required value={endDate} onChange={e => setEndDate(e.target.value)} />
+                <input 
+                  type="date" 
+                  className={styles.formInput} 
+                  required 
+                  min={startDate || new Date().toISOString().split("T")[0]}
+                  value={endDate} 
+                  onChange={e => setEndDate(e.target.value)} 
+                />
               </div>
               <div className={styles.formGroup}>
                 <label className={styles.formLabel} style={{ fontSize: "0.68rem" }}>

@@ -132,11 +132,6 @@ export default function PrintTemplate({ request, id }: { request: RequestItem | 
             <td>HỌ TÊN 姓名</td>
             <td colSpan={2}>ĐỊA ĐIỂM MANG ĐẾN<br/>攜往地方</td>
           </tr>
-          <tr>
-            <td colSpan={2}>(Unit of user/applicant)</td>
-            <td>(Name of user/applicant)</td>
-            <td colSpan={2}>(Destination of goods)</td>
-          </tr>
           
           {/* User Info Values */}
           <tr>

@@ -105,8 +105,19 @@ export async function GET(request: Request) {
         }
       }
       const nextRequestCode = `${prefix}${nextSeq.toString().padStart(4, '0')}`;
+      
+      // Fetch master units list
+      await client.query(`
+        CREATE TABLE IF NOT EXISTS goods_out_units (
+          unit_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+          unit_name TEXT NOT NULL UNIQUE,
+          created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+        );
+      `);
+      const unitsRes = await client.query(`SELECT unit_name FROM goods_out_units ORDER BY unit_name ASC`);
+      const unitsList = unitsRes.rows.map(r => r.unit_name);
 
-      return NextResponse.json({ success: true, data: mappedData, nextRequestCode });
+      return NextResponse.json({ success: true, data: mappedData, nextRequestCode, unitsList });
     } finally {
       client.release();
     }
@@ -161,20 +172,24 @@ export async function POST(request: Request) {
     }
     const requestNo = `${prefix}${nextSeq.toString().padStart(4, '0')}`;
     
-    const applicantEmpno = requesterEmpno || '000000';
-    const applicantName = requesterName || 'Unknown';
-    const applicantDept = requesterDept || 'Unknown';
+    const applicantEmpno = body.applicantEmpno || body.requesterEmpno || body.empno || '000000';
+    const applicantName = body.applicantName || body.requesterName || body.full_name || body.name || 'Unknown';
+    const applicantDept = body.applicantDept || body.requesterDept || body.dept || 'Unknown';
     
-      // Ensure column exists
+      // Ensure columns exist with default values
       await client.query('ALTER TABLE goods_out_requests ADD COLUMN IF NOT EXISTS flow_snapshot JSONB;');
+      await client.query("ALTER TABLE goods_out_requests ADD COLUMN IF NOT EXISTS current_lvl VARCHAR(50) DEFAULT 'dept_manager';");
+      await client.query('ALTER TABLE goods_out_requests ALTER COLUMN current_step SET DEFAULT 1;');
 
       const insertRequestQuery = `
         INSERT INTO goods_out_requests (
           request_no, applicant_empno, applicant_name, applicant_dept, destination,
-          request_date, start_date, end_date, carrier_empno, carrier_name, status, flow_snapshot
+          request_date, start_date, end_date, carrier_empno, carrier_name, status, flow_snapshot,
+          current_step, current_lvl
         ) VALUES (
           $1, $2, $3, $4, $5,
-          CURRENT_DATE, $6, $7, $8, $9, 'PENDING_DEPT', $10
+          CURRENT_DATE, $6, $7, $8, $9, 'PENDING_DEPT', $10,
+          1, 'dept_manager'
         ) RETURNING request_id
       `;
       
@@ -187,12 +202,29 @@ export async function POST(request: Request) {
     const requestRes = await client.query(insertRequestQuery, reqValues);
     const requestId = requestRes.rows[0].request_id;
     
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS goods_out_units (
+        unit_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+        unit_name TEXT NOT NULL UNIQUE,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+      );
+    `);
+
     if (items && items.length > 0) {
       for (const item of items) {
+        const uName = (item.unit || 'Cái').trim();
         await client.query(`
           INSERT INTO goods_out_items (request_id, item_name, quantity, unit, purpose)
           VALUES ($1, $2, $3, $4, $5)
-        `, [requestId, item.name, parseFloat(item.quantity) || 1, item.unit || 'Cái', item.purpose || reason || '']);
+        `, [requestId, item.name, parseFloat(item.quantity) || 1, uName, item.purpose || reason || '']);
+
+        if (uName) {
+          await client.query(`
+            INSERT INTO goods_out_units (unit_name)
+            VALUES ($1)
+            ON CONFLICT (unit_name) DO NOTHING
+          `, [uName]);
+        }
       }
     }
     

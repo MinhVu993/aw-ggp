@@ -144,6 +144,7 @@ export async function PUT(
         status = 'PENDING_DEPT',
         return_reason = NULL,
         reject_reason = NULL,
+        resubmitted_at = NOW(),
         flow_snapshot = $6,
         current_lvl = 'dept_manager'
       WHERE request_id = $7

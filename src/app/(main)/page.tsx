@@ -364,6 +364,16 @@ function RequestsPageContent() {
   // Submit new Request
   const handleSubmitRequest = async (e: React.FormEvent) => {
     e.preventDefault();
+    const todayStr = new Date().toISOString().split("T")[0];
+    if (startDate && startDate < todayStr) {
+      toast.error(t("start_date_cannot_be_in_past") || "Ngày bắt đầu không được nhỏ hơn ngày hiện tại");
+      return;
+    }
+    if (endDate && startDate && endDate < startDate) {
+      toast.error(t("end_date_cannot_be_before_start") || "Ngày kết thúc tối thiểu phải bằng hoặc sau ngày bắt đầu");
+      return;
+    }
+
     if (!destination.trim()) {
       toast.error(t("please_fill_required_fields"));
       return;
@@ -384,9 +394,12 @@ function RequestsPageContent() {
         method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          applicantName: user?.full_name || user?.name,
-          applicantEmpno: user?.empno,
+          applicantName: user?.full_name || user?.name || "Unknown",
+          applicantEmpno: user?.empno || "000000",
           applicantDept: user?.dept || "Unknown",
+          requesterName: user?.full_name || user?.name || "Unknown",
+          requesterEmpno: user?.empno || "000000",
+          requesterDept: user?.dept || "Unknown",
           destination,
           startDate,
           endDate,
