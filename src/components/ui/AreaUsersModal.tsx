@@ -362,7 +362,6 @@ export default function AreaUsersModal({ isOpen, onClose, areaId, areaName, apiF
         .m-table tr:hover td { background: rgba(255,255,255,0.02); }
 
         .m-empno {
-          font-family: 'JetBrains Mono', 'Roboto Mono', monospace;
           font-size: 0.8rem; color: var(--text-secondary); font-weight: 500;
         }
         .m-name { font-weight: 700; color: var(--text-primary); font-size: 0.9rem; }
@@ -377,7 +376,7 @@ export default function AreaUsersModal({ isOpen, onClose, areaId, areaName, apiF
         
         .m-time {
           display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem;
-          font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; font-weight: 700;
+          font-size: 0.85rem; font-weight: 700;
           color: var(--text-primary);
           background: rgba(255,255,255,0.03);
           padding: 0.2rem 0.5rem;

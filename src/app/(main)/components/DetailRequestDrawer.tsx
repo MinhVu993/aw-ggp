@@ -8,6 +8,8 @@ interface DetailRequestDrawerProps {
   request: RequestItem | null;
   onClose: () => void;
   onRenew: (req: RequestItem) => void;
+  onEdit?: (req: RequestItem) => void;
+  user?: any;
   t: (key: string) => string;
   language: string;
 }
@@ -16,6 +18,8 @@ export default function DetailRequestDrawer({
   request,
   onClose,
   onRenew,
+  onEdit,
+  user,
   t,
   language
 }: DetailRequestDrawerProps) {
@@ -34,7 +38,7 @@ export default function DetailRequestDrawer({
         <div className={styles.drawerHeader}>
           <h2 className={styles.drawerTitle}>
             {t("access_request")}{" "}
-            <span style={{ fontFamily: "ui-monospace, SFMono-Regular, monospace", fontSize: "1rem", color: "var(--accent-primary)", marginLeft: "0.5rem" }}>
+            <span style={{ fontSize: "1rem", color: "var(--accent-primary)", marginLeft: "0.5rem" }}>
               [{request.requestCode || `#${request.id}`}]
             </span>
           </h2>
@@ -44,19 +48,17 @@ export default function DetailRequestDrawer({
         </div>
 
         <div className={styles.drawerContent}>
-          {/* ── Approval Flow Stepper ── */}
+          {/* ── Approval Flow Stepper (Inline Connected Stepper) ── */}
           {snap.length > 0 && (
-            <div className={styles.horizontalScroll} style={{
+            <div style={{
               display: "flex",
               alignItems: "center",
-              justifyContent: "flex-start",
-              flexWrap: "nowrap",
-              overflowX: "auto",
+              justifyContent: "space-between",
               width: "100%",
-              padding: "0.5rem 0.25rem 1.25rem 0.25rem",
-              gap: "8px",
+              padding: "0.75rem 0.25rem 1.25rem 0.25rem",
               borderBottom: "1px dashed var(--glass-border)",
-              marginBottom: "0.5rem",
+              marginBottom: "0.75rem",
+              boxSizing: "border-box",
               flexShrink: 0
             }}>
               {snap.map((flow: any, index: number) => {
@@ -73,12 +75,27 @@ export default function DetailRequestDrawer({
                 return (
                   <React.Fragment key={index}>
                     {index > 0 && (
-                      <div style={{ flex: "1 0 30px", height: "1px", backgroundColor: "var(--glass-border)", margin: "0 12px", alignSelf: "center" }} />
-                    )}
-                    <div style={{ display: "flex", alignItems: "center", gap: "8px", flexShrink: 0 }}>
-                      {/* Step badge */}
                       <div style={{
-                        width: "26px", height: "26px", borderRadius: "50%",
+                        flex: "1 1 20px",
+                        height: "1px",
+                        backgroundColor: "rgba(255, 255, 255, 0.15)",
+                        margin: "0 12px",
+                        alignSelf: "center",
+                        minWidth: "15px"
+                      }} />
+                    )}
+
+                    <div style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "10px",
+                      flexShrink: 0
+                    }}>
+                      {/* Step Badge */}
+                      <div style={{
+                        width: "26px",
+                        height: "26px",
+                        borderRadius: "50%",
                         background: isDoneLevel
                           ? "linear-gradient(135deg, #10b981 0%, #059669 100%)"
                           : isRejectedLevel
@@ -87,33 +104,55 @@ export default function DetailRequestDrawer({
                               ? "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)"
                               : "linear-gradient(135deg, #52525b 0%, #3f3f46 100%)",
                         boxShadow: isDoneLevel
-                          ? "0 3px 6px rgba(16,185,129,0.3)"
+                          ? "0 0 0 2px rgba(16,185,129,0.25), 0 2px 6px rgba(16,185,129,0.35)"
                           : isRejectedLevel
-                            ? "0 3px 6px rgba(239,68,68,0.35)"
+                            ? "0 0 0 2px rgba(239,68,68,0.25), 0 2px 6px rgba(239,68,68,0.35)"
                             : isCurrentLevel
-                              ? "0 3px 6px rgba(245,158,11,0.35)"
+                              ? "0 0 0 2px rgba(245,158,11,0.25), 0 2px 6px rgba(245,158,11,0.35)"
                               : "none",
-                        display: "flex", alignItems: "center", justifyContent: "center",
-                        color: "#fff", flexShrink: 0
-                      }}>{isDoneLevel
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        color: "#fff",
+                        flexShrink: 0
+                      }}>
+                        {isDoneLevel
                           ? <Check size={14} weight="bold" />
                           : isRejectedLevel
                             ? <X size={14} weight="bold" />
                             : isCurrentLevel
                               ? <span style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#fff", display: "inline-block" }} />
                               : <span style={{ fontSize: "11px", fontWeight: "700" }}>{index + 1}</span>
-                        }</div>
-                      {/* Step info */}
-                      <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", lineHeight: "1.3", whiteSpace: "nowrap" }}>
-                        <div style={{ fontSize: "11px", color: isDoneLevel ? "#10b981" : isRejectedLevel ? "#ef4444" : isCurrentLevel ? "#f59e0b" : "var(--text-secondary)", fontWeight: "600" }}>
+                        }
+                      </div>
+
+                      {/* Step Info */}
+                      <div style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "flex-start",
+                        lineHeight: "1.3"
+                      }}>
+                        <div style={{
+                          fontSize: "11px",
+                          color: isDoneLevel ? "#10b981" : isRejectedLevel ? "#ef4444" : isCurrentLevel ? "#f59e0b" : "var(--text-secondary)",
+                          fontWeight: "500"
+                        }}>
                           {stepTitle}
-                          {isCurrentLevel && <span style={{ marginLeft: "4px", opacity: 0.8 }}>←</span>}
                         </div>
-                        <div style={{ fontSize: "13px", color: "var(--text-primary)", fontWeight: "700" }}>
+                        <div style={{
+                          fontSize: "13px",
+                          color: "var(--text-primary)",
+                          fontWeight: "700"
+                        }}>
                           {managerNames || "—"}
                         </div>
                         {deputyNames && (
-                          <div style={{ fontSize: "11px", color: "var(--accent-primary)", marginTop: "1px" }}>
+                          <div style={{
+                            fontSize: "11px",
+                            color: "var(--text-secondary)",
+                            marginTop: "1px"
+                          }}>
                             {deputyNames}
                           </div>
                         )}
@@ -126,19 +165,19 @@ export default function DetailRequestDrawer({
           )}
 
           {/* ── Destination ── */}
-          <div className={styles.formGroup} style={{ marginTop: "0.5rem", flexShrink: 0 }}>
+          <div className={styles.formGroup} style={{ flexShrink: 0 }}>
             <label className={styles.formLabel}>
-              <MapPin size={14} style={{ display: "inline", marginRight: "4px" }} />
+              <MapPin size={14} style={{ display: "inline", marginRight: "4px", verticalAlign: "middle" }} color="var(--accent-primary)" />
               {t("destination")}
             </label>
             <input type="text" className={styles.formInput} value={request.destination || "—"} readOnly />
           </div>
 
           {/* ── Date Range & Carrier ── */}
-          <div style={{ display: "flex", gap: "1rem", marginTop: "0.5rem", flexShrink: 0 }}>
+          <div style={{ display: "flex", gap: "0.75rem", flexShrink: 0 }}>
             <div className={styles.formGroup} style={{ flex: 1 }}>
               <label className={styles.formLabel}>{t("date_range")}</label>
-              <input type="text" className={styles.formInput} value={`${request.startDate || request.requestDate || "—"}  ➜  ${request.endDate || request.requestDate || "—"}`} readOnly style={{ fontFamily: "ui-monospace, SFMono-Regular, monospace", color: "var(--accent-primary)", fontWeight: "600" }} />
+              <input type="text" className={styles.formInput} value={`${request.startDate || request.requestDate || "—"}  ➜  ${request.endDate || request.requestDate || "—"}`} readOnly style={{ color: "var(--accent-primary)", fontWeight: "600" }} />
             </div>
             <div className={styles.formGroup} style={{ flex: 1 }}>
               <label className={styles.formLabel}>{t("carrier_info")}</label>
@@ -148,35 +187,35 @@ export default function DetailRequestDrawer({
 
           {/* ── Additional Info (Note) ── */}
           {request.reason && (
-            <div className={`${styles.formGroup} ${styles.formGroupFull}`} style={{ flexShrink: 0, marginTop: "1rem", marginBottom: 0 }}>
-              <label className={styles.formLabel} style={{ marginBottom: "4px" }}>{t("note")}</label>
-              <textarea className={styles.formTextarea} value={request.reason} readOnly rows={2} style={{ minHeight: "auto", padding: "8px 12px", resize: "vertical" }} />
+            <div className={`${styles.formGroup} ${styles.formGroupFull}`} style={{ flexShrink: 0 }}>
+              <label className={styles.formLabel}>{t("note")}</label>
+              <textarea className={styles.formTextarea} value={request.reason} readOnly rows={2} style={{ minHeight: "45px", resize: "vertical" }} />
             </div>
           )}
 
           {/* ── Return/Reject Reason (if applicable) ── */}
           {request.status === 4 && request.returnReason && (
-            <div style={{ marginTop: "1rem", padding: "1rem", border: "1px solid #f59e0b", borderRadius: "6px", backgroundColor: "rgba(245,158,11,0.05)" }}>
-              <h4 style={{ margin: "0 0 0.5rem 0", color: "#d97706", fontSize: "0.85rem", fontWeight: 700, display: "flex", alignItems: "center", gap: "6px" }}>
-                <X size={16} weight="bold" /> {t("rejection_reason")}
+            <div style={{ padding: "0.75rem", border: "1px solid #f59e0b", borderRadius: "4px", backgroundColor: "rgba(245,158,11,0.05)", flexShrink: 0 }}>
+              <h4 style={{ margin: "0 0 0.25rem 0", color: "#d97706", fontSize: "0.8rem", fontWeight: 700, display: "flex", alignItems: "center", gap: "6px" }}>
+                <X size={14} weight="bold" /> {t("return_reason")}
               </h4>
-              <p style={{ margin: 0, fontSize: "0.9rem", color: "var(--text-primary)" }}>{request.returnReason}</p>
+              <p style={{ margin: 0, fontSize: "0.85rem", color: "var(--text-primary)" }}>{request.returnReason}</p>
             </div>
           )}
 
           {request.status === 3 && request.rejectReason && (
-            <div style={{ marginTop: "1rem", padding: "1rem", border: "1px solid #ef4444", borderRadius: "6px", backgroundColor: "rgba(239,68,68,0.05)" }}>
-              <h4 style={{ margin: "0 0 0.5rem 0", color: "#dc2626", fontSize: "0.85rem", fontWeight: 700, display: "flex", alignItems: "center", gap: "6px" }}>
-                <X size={16} weight="bold" /> {t("rejection_reason")}
+            <div style={{ padding: "0.75rem", border: "1px solid #ef4444", borderRadius: "4px", backgroundColor: "rgba(239,68,68,0.05)" }}>
+              <h4 style={{ margin: "0 0 0.25rem 0", color: "#dc2626", fontSize: "0.8rem", fontWeight: 700, display: "flex", alignItems: "center", gap: "6px" }}>
+                <X size={14} weight="bold" /> {t("rejection_reason")}
               </h4>
-              <p style={{ margin: 0, fontSize: "0.9rem", color: "var(--text-primary)" }}>{request.rejectReason}</p>
+              <p style={{ margin: 0, fontSize: "0.85rem", color: "var(--text-primary)" }}>{request.rejectReason}</p>
             </div>
           )}
 
           {/* ── Items list ── */}
-          <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem", flex: "1 1 auto", minHeight: 0, marginTop: "1rem" }}>
-            <div className={styles.formSectionTitle} style={{ marginBottom: "0" }}>
-              <Package size={18} weight="bold" color="var(--accent-primary)" />
+          <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem", flex: "1 1 auto", minHeight: 0 }}>
+            <div className={styles.formSectionTitle}>
+              <Package size={16} weight="bold" color="var(--accent-primary)" />
               {t("items_list")} ({request.items?.length || request.itemCount || 0})
             </div>
             <div className={styles.horizontalScroll} style={{ flex: 1, overflowY: "auto", border: "1px solid var(--glass-border)", borderRadius: "4px", background: "var(--bg-secondary)" }}>
@@ -193,7 +232,7 @@ export default function DetailRequestDrawer({
                   {request.items?.map((item, idx) => (
                     <tr key={`${item.id || ''}-${idx}`}>
                       <td style={{ padding: "10px 16px", fontWeight: 600, color: "var(--text-primary)" }}>{item.name || "-"}</td>
-                      <td style={{ padding: "10px 16px", fontWeight: 500, color: "var(--accent-primary)", fontFamily: "ui-monospace, SFMono-Regular, monospace" }}>{item.quantity || "-"}</td>
+                      <td style={{ padding: "10px 16px", fontWeight: 500, color: "var(--accent-primary)", }}>{item.quantity || "-"}</td>
                       <td style={{ padding: "10px 16px", color: "var(--text-secondary)" }}>{item.unit || "-"}</td>
                       <td style={{ padding: "10px 16px", color: "var(--text-secondary)" }}>{item.purpose || "-"}</td>
                     </tr>
@@ -213,6 +252,27 @@ export default function DetailRequestDrawer({
 
         <div className={styles.drawerFooter}>
           <div style={{ flex: 1 }} />
+          {request.status === 4 && onEdit && user && String(user.empno) === String(request.requesterEmpno) && (
+            <button 
+              type="button" 
+              style={{
+                padding: "0.5rem 1rem",
+                borderRadius: "4px",
+                border: "none",
+                background: "#f59e0b",
+                color: "white",
+                fontWeight: 600,
+                cursor: "pointer",
+                marginRight: "0.5rem"
+              }}
+              onClick={() => {
+                onClose();
+                onEdit(request);
+              }}
+            >
+              {t("btn_resubmit")}
+            </button>
+          )}
           <button type="button" className={styles.btnOutline} onClick={onClose}>
             {t("close")}
           </button>

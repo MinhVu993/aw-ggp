@@ -1,0 +1,17 @@
+const { Pool } = require('pg');
+
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/ggp'
+});
+
+async function run() {
+  const res = await pool.query(`
+    SELECT column_name, data_type 
+    FROM information_schema.columns 
+    WHERE table_name = 'goods_out_requests'
+  `);
+  console.log(res.rows);
+  process.exit(0);
+}
+
+run();

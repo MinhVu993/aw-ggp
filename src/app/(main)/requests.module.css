@@ -7,8 +7,7 @@
   gap: 1.5rem;
   background-color: var(--bg-primary);
   min-height: 100vh;
-  font-family: Inter, system-ui, sans-serif;
-}
+  }
 
 .pageHeader {
   display: flex;
@@ -18,7 +17,6 @@
 }
 
 .pageTitle {
-  font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, monospace;
   font-size: 1.5rem;
   font-weight: 700;
   color: var(--text-primary);
@@ -34,7 +32,6 @@
 }
 
 .pageSubtitle {
-  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
   font-size: 0.75rem;
   color: var(--text-secondary);
   text-transform: uppercase;
@@ -85,7 +82,6 @@
 }
 
 .statLabel {
-  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
   font-size: 0.7rem;
   font-weight: 600;
   color: var(--text-secondary);
@@ -136,7 +132,6 @@
   border: none;
   border-right: 1px solid var(--glass-border);
   padding: 0.5rem 1rem;
-  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
   font-size: 0.75rem;
   font-weight: 600;
   color: var(--text-secondary);
@@ -190,7 +185,6 @@
 .searchInput {
   width: 100%;
   padding: 0.625rem 1rem 0.625rem 2.25rem;
-  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
   font-size: 0.75rem;
   background: var(--bg-primary);
   border: 1px solid var(--glass-border);
@@ -210,7 +204,6 @@
   color: var(--accent-primary);
   border: 1px solid var(--accent-primary);
   padding: 0.625rem 1.25rem;
-  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
   font-size: 0.75rem;
   font-weight: 700;
   text-transform: uppercase;
@@ -233,7 +226,6 @@
   border: 1px solid var(--glass-border);
   color: var(--text-primary);
   padding: 0.625rem 1.25rem;
-  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
   font-size: 0.75rem;
   font-weight: 700;
   text-transform: uppercase;
@@ -256,7 +248,6 @@
   color: #ef4444;
   border: 1px solid #ef4444;
   padding: 0.625rem 1.25rem;
-  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
   font-size: 0.75rem;
   font-weight: 700;
   text-transform: uppercase;
@@ -279,7 +270,6 @@
   color: #10b981;
   border: 1px solid #10b981;
   padding: 0.625rem 1.25rem;
-  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
   font-size: 0.75rem;
   font-weight: 700;
   text-transform: uppercase;
@@ -309,6 +299,7 @@
   overflow-x: auto;
   overflow-y: auto;
   max-height: 90vh;
+  padding-bottom: 150px;
 }
 
 .table {
@@ -328,9 +319,8 @@
   color: var(--text-secondary);
   border-bottom: 1px solid var(--glass-border);
   text-transform: uppercase;
-  font-size: 0.7rem;
-  letter-spacing: 0.1em;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
 }
 
 .table td {
@@ -348,17 +338,36 @@
   background: rgba(128, 128, 128, 0.05);
 }
 
+.table th:last-child,
+.table td:last-child {
+  position: sticky;
+  right: 0;
+  z-index: 9;
+}
+
+.table td:last-child {
+  background: var(--bg-primary);
+}
+
+.table th:last-child {
+  background: var(--bg-secondary);
+  z-index: 12;
+}
+
+.table tr:hover td:last-child {
+  background: color-mix(in srgb, var(--bg-primary) 95%, #808080);
+}
+
 /* Badges */
 .badge {
   display: inline-flex;
   align-items: center;
   gap: 0.375rem;
   padding: 0.25rem 0;
-  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.02em;
   background: transparent;
 }
 
@@ -392,7 +401,6 @@
   font-weight: 600;
   margin-right: 0.375rem;
   margin-bottom: 0.25rem;
-  font-family: ui-monospace, SFMono-Regular, monospace;
   letter-spacing: 0.05em;
   text-transform: uppercase;
 }
@@ -442,7 +450,6 @@
 }
 
 .modalTitle {
-  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
   font-size: 1.125rem;
   font-weight: 700;
   color: var(--text-primary);
@@ -502,8 +509,7 @@
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-}
+  }
 
 .drawerTitle::before {
   content: '';
@@ -534,26 +540,25 @@
 }
 
 .drawerContent {
-  padding: 1.5rem 2rem;
+  padding: 1rem 1.5rem;
   overflow-y: auto;
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
+  gap: 0.75rem;
 }
 
 .formSectionTitle {
-  font-size: 0.85rem;
+  font-size: 0.78rem;
   font-weight: 700;
   color: var(--text-secondary);
   text-transform: uppercase;
-  letter-spacing: 0.1em;
-  margin-bottom: 0.75rem;
+  letter-spacing: 0.08em;
+  margin-bottom: 0.35rem;
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-}
+  gap: 0.5rem;
+  }
 
 .formSectionTitle::after {
   content: '';
@@ -565,13 +570,13 @@
 .formGrid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 1.5rem;
+  gap: 1rem;
 }
 
 .formGroup {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.25rem;
 }
 
 .formGroupFull {
@@ -584,14 +589,12 @@
   color: var(--text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-}
+  }
 
 .formInput, .formSelect, .formTextarea {
   width: 100%;
-  padding: 0.75rem 1rem;
-  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
-  font-size: 0.85rem;
+  padding: 0.55rem 0.75rem;
+  font-size: 0.825rem;
   background: var(--bg-primary);
   border: 1px solid var(--glass-border);
   color: var(--text-primary);
@@ -606,7 +609,7 @@
 }
 
 .formTextarea {
-  min-height: 80px;
+  min-height: 55px;
   resize: vertical;
 }
 
@@ -649,8 +652,7 @@
 .areaSelectCode {
   font-size: 0.75rem;
   color: var(--text-secondary);
-  font-family: monospace;
-}
+  }
 
 /* People Import Section */
 .peopleToolbar {
@@ -1248,8 +1250,7 @@
   background: rgba(255, 255, 255, 0.05);
   padding: 2px 6px;
   border-radius: 4px;
-  font-family: monospace;
-}
+  }
 
 .flowManagersList {
   display: flex;
@@ -1295,8 +1296,7 @@
 .flowManagerEmpno {
   font-size: 0.75rem;
   color: var(--text-secondary);
-  font-family: monospace;
-}
+  }
 
 .flowManagerDepts {
   display: flex;
@@ -1391,8 +1391,7 @@
   background: rgba(255, 255, 255, 0.05);
   padding: 1px 4px;
   border-radius: 3px;
-  font-family: monospace;
-}
+  }
 
 .flowStepLine {
   flex: 0.5;
@@ -1431,8 +1430,7 @@
 .flowManagerEmpnoHorizontal {
   font-size: 0.7rem;
   color: var(--text-secondary);
-  font-family: monospace;
-}
+  }
 
 .flowDeputyTagHorizontal {
   font-size: 0.65rem;

@@ -25,7 +25,26 @@ export async function GET(request: Request) {
             )
             FROM goods_out_items i
             WHERE i.request_id = r.request_id
-          ) as items
+          ) as items,
+          (
+            SELECT json_agg(
+              json_build_object(
+                'id', l.log_id,
+                'stepLevel', l.step_level,
+                'stepName', l.step_name,
+                'lvlCode', l.step_name,
+                'approverEmpno', l.approver_empno,
+                'approverName', l.approver_name,
+                'approverRole', l.approver_role,
+                'action', l.action,
+                'note', l.comment,
+                'actedAt', to_char(l.created_at, 'YYYY-MM-DD HH24:MI:SS')
+              )
+              ORDER BY l.log_id ASC
+            )
+            FROM goods_out_approval_logs l
+            WHERE l.request_id = r.request_id
+          ) as approval_logs
         FROM goods_out_requests r
         ORDER BY r.created_at DESC
         LIMIT 100
@@ -63,11 +82,31 @@ export async function GET(request: Request) {
           items: row.items || [],
           currentLvlCode: row.current_lvl || (row.status === 'PENDING_DEPT' ? 'dept_manager' : 'ps_manager'), 
           flowSnapshot: row.flow_snapshot || [], 
-          approvalLogs: []
+          approvalLogs: row.approval_logs || [],
+          qrCode: row.qr_code
         };
       });
 
-      return NextResponse.json({ success: true, data: mappedData });
+      // Calculate next request code in format GGP-YYMM-0001 (e.g., GGP-2608-0001)
+      const now = new Date();
+      const yy = String(now.getFullYear()).slice(-2);
+      const mm = String(now.getMonth() + 1).padStart(2, '0');
+      const prefix = `GGP-${yy}${mm}-`;
+      const nextCodeRes = await client.query(
+        `SELECT request_no FROM goods_out_requests WHERE request_no LIKE $1 ORDER BY request_no DESC LIMIT 1`,
+        [`${prefix}%`]
+      );
+      let nextSeq = 1;
+      if (nextCodeRes.rows.length > 0 && nextCodeRes.rows[0].request_no) {
+        const parts = nextCodeRes.rows[0].request_no.split('-');
+        const lastNum = parseInt(parts[parts.length - 1], 10);
+        if (!isNaN(lastNum)) {
+          nextSeq = lastNum + 1;
+        }
+      }
+      const nextRequestCode = `${prefix}${nextSeq.toString().padStart(4, '0')}`;
+
+      return NextResponse.json({ success: true, data: mappedData, nextRequestCode });
     } finally {
       client.release();
     }
@@ -102,11 +141,25 @@ export async function POST(request: Request) {
     // Start transaction
     await client.query('BEGIN');
     
-    // Generate request_no (e.g., GGP-20231118-0001)
-    const dateStr = new Date().toISOString().replace(/-/g, '').slice(0, 8);
-    const countRes = await client.query(`SELECT COUNT(*) FROM goods_out_requests WHERE request_no LIKE $1`, [`GGP-${dateStr}-%`]);
-    const count = parseInt(countRes.rows[0].count, 10) + 1;
-    const requestNo = `GGP-${dateStr}-${count.toString().padStart(4, '0')}`;
+    // Generate request_no in format: GGP-YYMM-0001 (e.g., GGP-2608-0001)
+    const now = new Date();
+    const yy = String(now.getFullYear()).slice(-2);
+    const mm = String(now.getMonth() + 1).padStart(2, '0');
+    const prefix = `GGP-${yy}${mm}-`;
+
+    const maxRes = await client.query(
+      `SELECT request_no FROM goods_out_requests WHERE request_no LIKE $1 ORDER BY request_no DESC LIMIT 1`,
+      [`${prefix}%`]
+    );
+    let nextSeq = 1;
+    if (maxRes.rows.length > 0 && maxRes.rows[0].request_no) {
+      const parts = maxRes.rows[0].request_no.split('-');
+      const lastNum = parseInt(parts[parts.length - 1], 10);
+      if (!isNaN(lastNum)) {
+        nextSeq = lastNum + 1;
+      }
+    }
+    const requestNo = `${prefix}${nextSeq.toString().padStart(4, '0')}`;
     
     const applicantEmpno = requesterEmpno || '000000';
     const applicantName = requesterName || 'Unknown';

@@ -34,6 +34,7 @@ export interface RequestItem {
   approvalLogs?: any[];      // Approval history
   parentId?: number;
   renewedToCode?: string;
+  qrCode?: string;
 }
 
 export interface InternalUser {

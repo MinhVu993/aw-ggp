@@ -6,7 +6,8 @@ import {
   X, 
   ClipboardText, 
   Copy, 
-  Printer
+  Printer,
+  ArrowUDownLeft
 } from "@phosphor-icons/react";
 import { RequestItem } from "../types";
 import styles from "../requests.module.css";
@@ -16,6 +17,7 @@ interface ActionDropdownProps {
   canApprove: boolean;
   onApprove: (id: number) => void;
   onReject: (id: number) => void;
+  onReturn?: (id: number) => void;
   onDetail: (item: RequestItem) => void;
   onRenew: (item: RequestItem) => void;
   onPrint: (item: RequestItem) => void;
@@ -27,6 +29,7 @@ export default function ActionDropdown({
   canApprove,
   onApprove,
   onReject,
+  onReturn,
   onDetail,
   onRenew,
   onPrint,
@@ -113,6 +116,19 @@ export default function ActionDropdown({
               >
                 <Check size={16} weight="bold" />
                 <span>{t("btn_approve")}</span>
+              </button>
+              <button
+                onClick={(e) => handleAction(e, () => onReturn && onReturn(item.id))}
+                style={{
+                  display: "flex", alignItems: "center", gap: "0.5rem", padding: "0.5rem 1rem",
+                  background: "transparent", border: "none", color: "#f59e0b", fontSize: "0.85rem", cursor: "pointer",
+                  textAlign: "left", width: "100%"
+                }}
+                onMouseEnter={e => e.currentTarget.style.background = "rgba(245, 158, 11, 0.1)"}
+                onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+              >
+                <ArrowUDownLeft size={16} weight="bold" />
+                <span>{t("btn_return")}</span>
               </button>
               <button
                 onClick={(e) => handleAction(e, () => onReject(item.id))}

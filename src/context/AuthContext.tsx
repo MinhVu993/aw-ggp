@@ -14,6 +14,7 @@ export interface User {
     email: string;
     role: string | null;
     group_empno?: string;
+    full_name?: string;
 }
 
 interface AuthContextType {

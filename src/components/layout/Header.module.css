@@ -40,7 +40,6 @@
     background: transparent;
     outline: none;
     color: var(--text-primary);
-    font-family: inherit;
     font-size: 0.95rem;
     width: 100%;
 }
@@ -69,7 +68,6 @@
 }
 
 .shortcutHint {
-    font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
     font-size: 0.65rem;
     font-weight: 700;
     color: var(--text-secondary);
@@ -150,7 +148,6 @@
     font-weight: 700;
     color: var(--text-primary);
     white-space: nowrap;
-    font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
     text-transform: uppercase;
 }
 
@@ -160,11 +157,9 @@
     color: var(--text-secondary);
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
-}
+    }
 
 .userLabel {
-    font-family: var(--font-noto), sans-serif;
     font-size: 0.85rem;
     font-weight: 600;
     color: var(--text-secondary);
@@ -390,7 +385,6 @@
 }
 
 .logoText {
-    font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
     font-weight: 700;
     font-size: 0.95rem;
     color: var(--text-primary);

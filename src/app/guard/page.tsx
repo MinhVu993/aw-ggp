@@ -7,13 +7,12 @@ import QRScanner from "./components/QRScanner";
 import RequestDetailsPanel from "./components/RequestDetailsPanel";
 import { toast } from "sonner";
 import { GoodsOutItem } from "@/app/(main)/types";
-import { ShieldCheck } from "@phosphor-icons/react";
 
-// Mock API response type
 export interface ScannedRequest {
   id: number;
   requestCode: string;
   applicantName: string;
+  applicantEmpno?: string;
   applicantDept: string;
   destination: string;
   items: GoodsOutItem[];
@@ -24,6 +23,7 @@ export interface ScannedRequest {
   endDate: string;
   carrierEmpno: string;
   carrierName: string;
+  qrCode?: string;
 }
 
 export default function GuardPage() {
@@ -33,70 +33,65 @@ export default function GuardPage() {
   const [loading, setLoading] = useState(false);
 
   const handleScanSuccess = async (qrToken: string) => {
+    if (!qrToken.trim()) return;
     setLoading(true);
-    
-    // Simulate network delay
-    await new Promise(resolve => setTimeout(resolve, 600));
 
-    // Mock validation
-    if (qrToken === "EXPIRED_TOKEN") {
-      toast.error(t("qr_expired"));
+    try {
+      const res = await fetch("/api/guard/scan", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ qrToken: qrToken.trim() })
+      });
+
+      const result = await res.json();
+
+      if (result.success && result.data) {
+        setScannedData(result.data);
+        toast.success(t("qr_success") || "Quét mã thành công");
+      } else {
+        toast.error(result.error || "Không tìm thấy dữ liệu đơn hàng");
+      }
+    } catch (err: any) {
+      console.error("Scan error:", err);
+      toast.error(t("conn_failed") || "Lỗi kết nối máy chủ");
+    } finally {
       setLoading(false);
-      return;
     }
-
-    if (qrToken === "USED_TOKEN") {
-      toast.error(t("qr_used"));
-      setLoading(false);
-      return;
-    }
-
-    const today = new Date().toISOString().split('T')[0];
-
-    // Mock successful response
-    const mockRequest: ScannedRequest = {
-      id: 101,
-      requestCode: "GGP-20231010-001",
-      applicantName: "Nguyễn Văn A",
-      applicantDept: "PCC",
-      destination: "abc",
-      status: "APPROVED_WAITING_GATE",
-      qrExpiresAt: new Date(Date.now() + 3600000).toISOString(), // 1 hour from now
-      isQrUsed: false,
-      startDate: today,
-      endDate: today,
-      carrierEmpno: "V00123",
-      carrierName: "Trần Bảo Vệ",
-      items: [
-        { name: "Máy tính xách tay", quantity: "1", unit: "Cái", purpose: "Làm việc tại NM2" },
-        { name: "Tài liệu kỹ thuật", quantity: "5", unit: "Bộ", purpose: "Bàn giao dự án" }
-      ]
-    };
-
-    setScannedData(mockRequest);
-    setLoading(false);
-    toast.success(t("qr_success"));
   };
 
   const handleConfirmPass = async () => {
     if (!scannedData) return;
     setLoading(true);
 
-    const guardEmpno = user?.empno || "N/A";
-    const guardName = user?.name || "Bảo vệ";
+    try {
+      const guardEmpno = user?.empno || user?.group_empno || "000000";
+      const guardName = user?.name || user?.full_name;
 
-    // Payload sent to backend includes security_guard_empno and security_guard_name
-    console.log("Confirming pass with Guard info:", {
-      requestId: scannedData.id,
-      securityGuardEmpno: guardEmpno,
-      securityGuardName: guardName,
-    });
+      const res = await fetch("/api/guard/confirm", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          requestId: scannedData.id,
+          securityGuardEmpno: guardEmpno,
+          securityGuardName: guardName,
+          gateName: "Cổng Bảo Vệ"
+        })
+      });
 
-    await new Promise(resolve => setTimeout(resolve, 800));
-    
-    toast.success(`${t("gate_confirm_success")} (${guardEmpno} - ${guardName})`);
-    setScannedData(null);
-    setLoading(false);
+      const result = await res.json();
+
+      if (result.success) {
+        toast.success(result.message || `${t("gate_confirm_success")} (${guardEmpno} - ${guardName})`);
+        setScannedData(null);
+      } else {
+        toast.error(result.error || "Xác nhận qua cổng thất bại");
+      }
+    } catch (err: any) {
+      console.error("Confirm pass error:", err);
+      toast.error(t("conn_failed") || "Lỗi kết nối máy chủ");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleCancel = () => {
@@ -110,42 +105,27 @@ export default function GuardPage() {
       display: "flex",
       flexDirection: "column",
       alignItems: "center",
-      padding: "2rem 1rem"
+      justifyContent: "center",
+      padding: "1rem",
+      boxSizing: "border-box"
     }}>
-      <div style={{ textAlign: "center", marginBottom: "2rem" }}>
-        <h1 style={{ fontSize: "1.5rem", fontWeight: 700, color: "var(--text-primary)" }}>
-          {t("guard_title")}
-        </h1>
-        <p style={{ color: "var(--text-secondary)", fontSize: "0.9rem", marginTop: "0.5rem" }}>
-          {t("guard_subtitle")}
-        </p>
-
-        {/* Guard Session Info Badge from AuthComp */}
-        {/* {user && (
-          <div style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "0.5rem",
-            background: "rgba(255, 255, 255, 0.05)",
-            border: "1px solid var(--glass-border)",
-            borderRadius: "20px",
-            padding: "6px 16px",
-            fontSize: "0.85rem",
-            color: "var(--text-secondary)",
-            marginTop: "0.75rem"
-          }}>
-            <ShieldCheck size={18} color="var(--accent-primary)" />
-            <span>Bảo vệ trực ca: <strong style={{ color: "var(--text-primary)" }}>{user.empno ? `${user.empno} - ` : ""}{user.name}</strong></span>
-          </div>
-        )} */}
-      </div>
+      {!scannedData && (
+        <div style={{ textAlign: "center", marginBottom: "1.25rem" }}>
+          <h1 style={{ fontSize: "1.35rem", fontWeight: 700, color: "var(--text-primary)" }}>
+            {t("guard_title")}
+          </h1>
+          <p style={{ color: "var(--text-secondary)", fontSize: "0.85rem", marginTop: "0.25rem" }}>
+            {t("guard_subtitle")}
+          </p>
+        </div>
+      )}
 
       {!scannedData ? (
-        <div style={{ width: "100%", maxWidth: "500px" }}>
+        <div style={{ width: "100%", maxWidth: "760px" }}>
           <QRScanner onScanSuccess={handleScanSuccess} loading={loading} />
         </div>
       ) : (
-        <div style={{ width: "100%", maxWidth: "600px" }}>
+        <div style={{ width: "100%", maxWidth: "1050px" }}>
           <RequestDetailsPanel 
             data={scannedData} 
             onConfirm={handleConfirmPass} 

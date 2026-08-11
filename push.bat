@@ -1,6 +1,6 @@
 @echo off
 set msg=%~1
-if "%msg%"=="" set msg="Update code"
+if "%msg%"=="" set msg=Update code
 
 echo ========================================
 echo Adding files to Git...

@@ -70,7 +70,7 @@ export default function CreateRequestDrawer({
       <div className={styles.drawer} onClick={e => e.stopPropagation()}>
         <div className={styles.drawerHeader}>
           <h2 className={styles.drawerTitle}>
-            {t("create_request")} {nextRequestCode && <span style={{ fontFamily: 'ui-monospace, SFMono-Regular, monospace', fontSize: '1rem', color: 'var(--accent-primary)', marginLeft: '0.5rem' }}>[{nextRequestCode}]</span>}
+            {t("create_request")} {nextRequestCode && <span style={{ fontSize: '1rem', color: 'var(--accent-primary)', marginLeft: '0.5rem' }}>[{nextRequestCode}]</span>}
           </h2>
           <button className={styles.closeButton} onClick={onClose}>
             <X size={20} weight="bold" />
@@ -85,18 +85,15 @@ export default function CreateRequestDrawer({
               <span>{t("flow_loading")}</span>
             </div>
           ) : flowData.length > 0 && (
-            <div className={styles.horizontalScroll} style={{
+            <div style={{
               display: "flex",
-              alignItems: "flex-start",
-              justifyContent: "flex-start",
-              flexWrap: "nowrap",
-              overflowX: "auto",
-              overflowY: "visible",
+              alignItems: "center",
+              justifyContent: "space-between",
               width: "100%",
-              padding: "1rem 0.5rem 2rem 0.5rem",
-              gap: "8px",
+              padding: "0.75rem 0.25rem 1.25rem 0.25rem",
               borderBottom: "1px dashed var(--glass-border)",
-              marginBottom: "0.5rem"
+              marginBottom: "0.75rem",
+              boxSizing: "border-box"
             }}>
               {flowData.map((flow, index) => {
                 const stepTitle = flow.lvl_name?.[language] || flow.lvl_name?.vi || flow.lvl_name?.en || flow.lvl_code;
@@ -111,33 +108,30 @@ export default function CreateRequestDrawer({
 
                 return (
                   <React.Fragment key={index}>
-                    {/* Divider Line between steps */}
                     {index > 0 && (
                       <div style={{
-                        flex: "1 0 30px",
+                        flex: "1 1 20px",
                         height: "1px",
-                        backgroundColor: "var(--glass-border)",
+                        backgroundColor: "rgba(255, 255, 255, 0.15)",
                         margin: "0 12px",
-                        marginTop: "14px",
-                        alignSelf: "flex-start"
+                        alignSelf: "center",
+                        minWidth: "15px"
                       }} />
                     )}
 
                     <div style={{
                       display: "flex",
-                      alignItems: "flex-start",
-                      gap: "8px",
+                      alignItems: "center",
+                      gap: "10px",
                       flexShrink: 0
                     }}>
-                      {/* Step Badge (Red circle with check mark) */}
+                      {/* Step Badge */}
                       <div style={{
                         width: "26px",
                         height: "26px",
-                        marginTop: "2px",
                         borderRadius: "50%",
-                        background: "linear-gradient(135deg, #ff5252 0%, #d32f2f 100%)",
-                        boxShadow: "0 3px 6px rgba(211, 47, 47, 0.3)",
-                        border: "2px solid #fff",
+                        background: "linear-gradient(135deg, #ef4444 0%, #dc2626 100%)",
+                        boxShadow: "0 0 0 2px rgba(239, 68, 68, 0.25), 0 2px 6px rgba(239, 68, 68, 0.4)",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
@@ -147,35 +141,35 @@ export default function CreateRequestDrawer({
                         <Check size={14} weight="bold" />
                       </div>
 
-                      {/* Step Label Info */}
+                      {/* Step Info */}
                       <div style={{
                         display: "flex",
                         flexDirection: "column",
                         alignItems: "flex-start",
-                        lineHeight: "1.3",
-                        whiteSpace: "nowrap"
+                        lineHeight: "1.3"
                       }}>
-                        {/* Step Title (e.g. Department Manager) */}
                         <div style={{
                           fontSize: "11px",
                           color: "var(--text-secondary)",
-                          fontWeight: "400",
-                          marginBottom: "1px"
-                        }}>{stepTitle}</div>
-                        {/* Manager Names */}
+                          fontWeight: "500"
+                        }}>
+                          {stepTitle}
+                        </div>
                         <div style={{
                           fontSize: "13px",
                           color: "var(--text-primary)",
-                          fontWeight: "600"
-                        }}>{managerNames || "—"}</div>
-                        {/* Deputy Names */}
+                          fontWeight: "700"
+                        }}>
+                          {managerNames || "—"}
+                        </div>
                         {deputyNames && (
                           <div style={{
-                            fontSize: "12px",
+                            fontSize: "11px",
                             color: "var(--text-secondary)",
-                            fontWeight: "400",
                             marginTop: "1px"
-                          }}>{deputyNames}</div>
+                          }}>
+                            {deputyNames}
+                          </div>
                         )}
                       </div>
                     </div>
@@ -183,64 +177,62 @@ export default function CreateRequestDrawer({
                 );
               })}
             </div>
-          )}
-
-          {/* Validity & Carrier (Compact Layout) */}
+          )}          {/* Validity & Carrier (Compact Card Layout) */}
           <div style={{
-            marginTop: "0.5rem",
             background: "var(--bg-secondary)",
             border: "1px solid var(--glass-border)",
-            padding: "1rem",
+            padding: "0.75rem 0.85rem",
             display: "flex",
             flexDirection: "column",
-            gap: "1rem"
+            gap: "0.5rem",
+            boxSizing: "border-box"
           }}>
             <div style={{
-              fontSize: "0.75rem",
-              fontWeight: 600,
+              fontSize: "0.72rem",
+              fontWeight: 700,
               color: "var(--text-secondary)",
               textTransform: "uppercase",
-              letterSpacing: "0.05em",
+              letterSpacing: "0.06em",
               display: "flex",
               alignItems: "center",
-              gap: "0.5rem"
+              gap: "0.4rem"
             }}>
-              <CalendarBlank size={14} />
+              <CalendarBlank size={14} color="var(--accent-primary)" />
               {t("date_range")} & {t("carrier_info")}
             </div>
             
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 0.6fr 1.4fr", gap: "0.75rem" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 0.6fr 1.4fr", gap: "0.5rem" }}>
               <div className={styles.formGroup}>
-                <label className={styles.formLabel} style={{ fontSize: "0.7rem", marginBottom: "4px" }}>
+                <label className={styles.formLabel} style={{ fontSize: "0.68rem" }}>
                   {t("start_date")} <span style={{ color: "#ef4444" }}>*</span>
                 </label>
-                <input type="date" className={styles.formInput} style={{ padding: "0.5rem", fontSize: "0.85rem" }} required value={startDate} onChange={e => setStartDate(e.target.value)} />
+                <input type="date" className={styles.formInput} required value={startDate} onChange={e => setStartDate(e.target.value)} />
               </div>
               <div className={styles.formGroup}>
-                <label className={styles.formLabel} style={{ fontSize: "0.7rem", marginBottom: "4px" }}>
+                <label className={styles.formLabel} style={{ fontSize: "0.68rem" }}>
                   {t("end_date")} <span style={{ color: "#ef4444" }}>*</span>
                 </label>
-                <input type="date" className={styles.formInput} style={{ padding: "0.5rem", fontSize: "0.85rem" }} required value={endDate} onChange={e => setEndDate(e.target.value)} />
+                <input type="date" className={styles.formInput} required value={endDate} onChange={e => setEndDate(e.target.value)} />
               </div>
               <div className={styles.formGroup}>
-                <label className={styles.formLabel} style={{ fontSize: "0.7rem", marginBottom: "4px" }}>
+                <label className={styles.formLabel} style={{ fontSize: "0.68rem" }}>
                   {t("carrier_empno")} <span style={{ color: "#ef4444" }}>*</span>
                 </label>
-                <input type="text" className={styles.formInput} style={{ padding: "0.5rem", fontSize: "0.85rem" }} required value={carrierEmpno} onChange={e => setCarrierEmpno(e.target.value)} placeholder="..." />
+                <input type="text" className={styles.formInput} required value={carrierEmpno} onChange={e => setCarrierEmpno(e.target.value)} placeholder="..." />
               </div>
               <div className={styles.formGroup}>
-                <label className={styles.formLabel} style={{ fontSize: "0.7rem", marginBottom: "4px" }}>
+                <label className={styles.formLabel} style={{ fontSize: "0.68rem" }}>
                   {t("carrier_name")} <span style={{ color: "#ef4444" }}>*</span>
                 </label>
-                <input type="text" className={styles.formInput} style={{ padding: "0.5rem", fontSize: "0.85rem" }} required value={carrierName} onChange={e => setCarrierName(e.target.value)} placeholder="..." />
+                <input type="text" className={styles.formInput} required value={carrierName} onChange={e => setCarrierName(e.target.value)} placeholder="..." />
               </div>
             </div>
           </div>
 
           {/* 1. Destination */}
-          <div className={styles.formGroup} style={{ marginTop: "1rem" }}>
+          <div className={styles.formGroup}>
             <label className={styles.formLabel}>
-              <MapPin size={14} style={{ display: "inline", marginRight: "4px" }} />
+              <MapPin size={14} style={{ display: "inline", marginRight: "4px", verticalAlign: "middle" }} color="var(--accent-primary)" />
               {t("destination")} <span style={{ color: "#ef4444" }}>*</span>
             </label>
             <input
@@ -264,9 +256,8 @@ export default function CreateRequestDrawer({
             </datalist>
           </div>
 
-
           {/* Note / Ghi chú */}
-          <div className={styles.formGroup} style={{ marginTop: "1rem" }}>
+          <div className={styles.formGroup}>
             <label className={styles.formLabel}>
               {t("note")}
             </label>
@@ -276,17 +267,17 @@ export default function CreateRequestDrawer({
               value={note}
               onChange={e => setNote(e.target.value)}
               rows={2}
-              style={{ resize: "vertical" }}
+              style={{ resize: "vertical", minHeight: "45px" }}
             />
           </div>
 
           {/* 2. Items List */}
-          <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem", marginTop: "0.5rem" }}>
-            <div className={styles.formSectionTitle} style={{ marginBottom: "0" }}>
-              <Package size={18} weight="bold" color="var(--accent-primary)" />
+          <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+            <div className={styles.formSectionTitle}>
+              <Package size={16} weight="bold" color="var(--accent-primary)" />
               {t("items_list")}
             </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.35rem" }}>
               {itemsList.map((item, index) => (
                 <div key={index} style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
                   <input

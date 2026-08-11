@@ -33,6 +33,7 @@ import { GoodsOutItem, RequestItem, InternalUser, isUserApprover } from "./types
 import { exportRequestsToCSV, downloadCSVTemplate, parseCSVText } from "./csvHelpers";
 import HistoryModal from "./components/HistoryModal";
 import RejectModal from "./components/RejectModal";
+import ReturnModal from "./components/ReturnModal";
 import ConfirmModal, { ConfirmModalState } from "./components/ConfirmModal";
 import DetailRequestDrawer from "./components/DetailRequestDrawer";
 import CreateRequestDrawer from "./components/CreateRequestDrawer";
@@ -97,6 +98,7 @@ function RequestsPageContent() {
     { name: "", quantity: "", unit: "", purpose: "" }
   ]);
   const [renewParentId, setRenewParentId] = useState<number | null>(null);
+  const [editRequestId, setEditRequestId] = useState<number | null>(null);
   const [conflictMsgs, setConflictMsgs] = useState<string[]>([]);
 
   // Employee Autocomplete search state (inside drawer)
@@ -132,6 +134,10 @@ function RequestsPageContent() {
   const [rejectModalOpen, setRejectModalOpen] = useState(false);
   const [requestToReject, setRequestToReject] = useState<number | null>(null);
   const [rejectReasonInput, setRejectReasonInput] = useState("");
+
+  const [returnModalOpen, setReturnModalOpen] = useState(false);
+  const [requestToReturn, setRequestToReturn] = useState<number | null>(null);
+  const [returnReasonInput, setReturnReasonInput] = useState("");
   const [empSuggestions, setEmpSuggestions] = useState<InternalUser[]>([]);
   const [savedDestinations, setSavedDestinations] = useState<string[]>([
     "Nhà máy 2 (NM2)",
@@ -224,6 +230,9 @@ function RequestsPageContent() {
       const requestsData = await requestsRes.json();
       if (requestsData.success) {
         setRequests(requestsData.data);
+        if (requestsData.nextRequestCode) {
+          setNextRequestCode(requestsData.nextRequestCode);
+        }
       }
 
       // Fetch metadata (areas and users) for form creation
@@ -231,7 +240,9 @@ function RequestsPageContent() {
       const initData = await initRes.json();
       if (initData.success) {
         setInternalUsers(initData.users || []);
-        setNextRequestCode(initData.nextRequestCode || "");
+        if (initData.nextRequestCode) {
+          setNextRequestCode(initData.nextRequestCode);
+        }
       }
     } catch (error) {
       console.error("Error fetching request data:", error);
@@ -353,13 +364,10 @@ function RequestsPageContent() {
   // Submit new Request
   const handleSubmitRequest = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (!destination) {
+    if (!destination.trim()) {
       toast.error(t("please_fill_required_fields"));
       return;
     }
-
-    // Filter out invalid items
     const validItems = itemsList.filter(i => i.name.trim() !== "");
     if (validItems.length === 0) {
       toast.error(t("please_add_at_least_one_item"));
@@ -369,30 +377,31 @@ function RequestsPageContent() {
     try {
       setActionLoading(true);
 
-      const res = await apiFetch("/api/requests", {
-        method: "POST",
+      const endpoint = editRequestId ? `/api/requests/${editRequestId}` : "/api/requests";
+      const method = editRequestId ? "PUT" : "POST";
+
+      const res = await apiFetch(endpoint, {
+        method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          title: formTitle,
+          applicantName: user?.full_name || user?.name,
+          applicantEmpno: user?.empno,
+          applicantDept: user?.dept || "Unknown",
+          destination,
+          startDate,
+          endDate,
+          carrierEmpno,
+          carrierName,
           reason: formReason,
-          requesterId: user?.id,
-          requesterEmpno: user?.empno,
-          requesterName: user?.name,
-          requesterDept: user?.dept,
-          destination: destination,
-          startDate: startDate,
-          endDate: endDate,
-          carrierEmpno: carrierEmpno,
-          carrierName: carrierName,
           items: validItems,
-          flowSnapshot: flowData.length > 0 ? flowData : null,
-          parentId: renewParentId,
+          flowSnapshot: flowData,
+          parentId: renewParentId
         })
       });
 
       const data = await res.json();
       if (data.success) {
-        toast.success(t("request_create_success"));
+        toast.success(editRequestId ? t("request_resubmit_success") : t("request_create_success"));
         setShowCreateDrawer(false);
         // Save new destination into master list if not existing
         if (destination && !savedDestinations.includes(destination.trim())) {
@@ -407,6 +416,8 @@ function RequestsPageContent() {
         setCarrierEmpno("");
         setCarrierName("");
         setItemsList([{ name: "", quantity: "", unit: "", purpose: "" }]);
+        setEditRequestId(null);
+        setRenewParentId(null);
         fetchData(); // Reload
       } else {
         toast.error(data.error || t("request_create_failed"));
@@ -458,7 +469,10 @@ function RequestsPageContent() {
               requestId,
               approve: true,
               rejectReason: null,
-              approverId: user.id
+              approverId: user.id,
+              approverEmpno: user.empno || user.group_empno || String(user.id),
+              approverName: user.name || user.full_name,
+              approverRole: user.role
             })
           });
 
@@ -501,7 +515,10 @@ function RequestsPageContent() {
           requestId: requestToReject,
           approve: false,
           rejectReason: rejectReasonInput,
-          approverId: user.id
+          approverId: user.id,
+          approverEmpno: user.empno || user.group_empno || String(user.id),
+          approverName: user.name || user.full_name || String(user.empno || "Approver"),
+          approverRole: user.role || "Approver"
         })
       });
 
@@ -522,8 +539,83 @@ function RequestsPageContent() {
       setActionLoading(false);
     }
   };
+
+  const handleDirectReturn = (requestId: number) => {
+    setRequestToReturn(requestId);
+    setReturnReasonInput("");
+    setReturnModalOpen(true);
+  };
+
+  const submitReturn = async () => {
+    if (!user || requestToReturn === null) return;
+    if (!returnReasonInput.trim()) {
+      toast.error(t("please_enter_return_reason"));
+      return;
+    }
+
+    try {
+      setActionLoading(true);
+      const res = await apiFetch("/api/requests/approve", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          requestId: requestToReturn,
+          action: "return",
+          returnReason: returnReasonInput,
+          approverId: user.id,
+          approverEmpno: user.empno || user.group_empno || String(user.id),
+          approverName: user.name || user.full_name || String(user.empno || "Approver"),
+          approverRole: user.role || "Approver"
+        })
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        toast.success(t("request_return_success"));
+        setReturnModalOpen(false);
+        setRequestToReturn(null);
+        setReturnReasonInput("");
+        fetchData(); // Reload
+      } else {
+        toast.error(data.error || t("request_approve_failed"));
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error(t("conn_failed"));
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleEditResubmit = (req: RequestItem) => {
+    setEditRequestId(req.id);
+    
+    setDestination(req.destination || "");
+    setStartDate(req.startDate || req.requestDate || "");
+    setEndDate(req.endDate || req.requestDate || "");
+    setCarrierEmpno(req.carrierEmpno || "");
+    setCarrierName(req.carrierName || "");
+    setFormReason(req.reason || "");
+    
+    if (req.items && req.items.length > 0) {
+      setItemsList(req.items.map(i => ({
+        name: i.name || "",
+        quantity: i.quantity || "",
+        unit: i.unit || "",
+        purpose: i.purpose || ""
+      })));
+    } else {
+      setItemsList([{ name: "", quantity: "", unit: "", purpose: "" }]);
+    }
+    
+    // Close Details Drawer if open, Open Create Drawer
+    setSelectedRequest(null);
+    setShowCreateDrawer(true);
+  };
+
   const handleRenewRequest = (req: RequestItem) => {
     setRenewParentId(req.id);
+    setEditRequestId(null);
     
     setDestination(req.destination || "");
     
@@ -561,7 +653,10 @@ function RequestsPageContent() {
           requestId: selectedRequest.id,
           approve,
           rejectReason: approve ? null : rejectReason,
-          approverId: user.id
+          approverId: user.id,
+          approverEmpno: user.empno || user.group_empno || String(user.id),
+          approverName: user.name || user.full_name || String(user.empno || "Approver"),
+          approverRole: user.role || "Approver"
         })
       });
 
@@ -600,8 +695,8 @@ function RequestsPageContent() {
       if (statusFilter === "pending") {
         if (r.status !== 1) return false;
       }
-      if (statusFilter === "approved" && r.status !== 2) return false;
-      if (statusFilter === "rejected" && r.status !== 3) return false;
+      if (statusFilter === "approved" && r.status !== 2 && r.status !== 5) return false;
+      if (statusFilter === "rejected" && r.status !== 3 && r.status !== 4) return false;
 
       // 2. Search query
       if (searchQuery.trim() !== "") {
@@ -710,108 +805,14 @@ function RequestsPageContent() {
       case 2:
         return <span className={`${styles.badge} ${styles.badgeApproved}`}><Check size={12} weight="bold" /> {t("status_approved_appr")}</span>;
       case 3:
-        return <span className={`${styles.badge} ${styles.badgeRejected}`}>{t("status_rejected_appr")}</span>;
+        return <span className={`${styles.badge} ${styles.badgeRejected}`}><X size={12} weight="bold" /> {t("status_rejected_appr")}</span>;
+      case 4:
+        return <span className={`${styles.badge}`} style={{ backgroundColor: "rgba(245, 158, 11, 0.1)", color: "#f59e0b", border: "1px solid rgba(245, 158, 11, 0.2)" }}><ArrowCounterClockwise size={12} weight="bold" /> {t("status_returned_appr")}</span>;
+      case 5:
+        return <span className={`${styles.badge} ${styles.badgeApproved}`} style={{ backgroundColor: "rgba(34, 197, 94, 0.1)", color: "#22c55e" }}><CheckCircle size={12} weight="bold" /> {t("status_completed_appr")}</span>;
       default:
         return null;
     }
-  };
-
-  const renderHistoryTable = (req: RequestItem) => {
-    if (!req.flowSnapshot || req.flowSnapshot.length === 0) return null;
-    return (
-      <div style={{ overflowX: "auto", border: "1px solid var(--glass-border)", borderRadius: "0", background: "var(--bg-secondary)" }}>
-        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.8rem", textAlign: "left" }}>
-          <thead>
-            <tr style={{ borderBottom: "1px solid var(--glass-border)", color: "var(--text-secondary)", backgroundColor: "var(--bg-tertiary)" }}>
-              <th style={{ padding: "8px 12px", fontWeight: 600 }}>{t("history_level")}</th>
-              <th style={{ padding: "8px 12px", fontWeight: 600 }}>{t("history_info")}</th>
-              <th style={{ padding: "8px 12px", fontWeight: 600 }}>{t("history_comment")}</th>
-              <th style={{ padding: "8px 12px", fontWeight: 600 }}>{t("history_time")}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {req.flowSnapshot?.map((step: any, idx: number) => {
-              const log = req.approvalLogs?.find((l: any) => l.lvlCode === step.lvl_code);
-              const currentLvlIdx = req.flowSnapshot?.findIndex((s: any) => s.lvl_code === req.currentLvlCode) ?? -1;
-              
-              let isNotReached = false;
-              let statusText = "";
-              let statusColor = "";
-              
-              if (log) {
-                if (log.action === "approved") {
-                  statusText = t("btn_approve");
-                  statusColor = "#10b981";
-                } else {
-                  statusText = t("btn_reject");
-                  statusColor = "#ef4444";
-                }
-              } else {
-                if (req.status === 3 && req.currentLvlCode === step.lvl_code) {
-                  statusText = t("btn_reject");
-                  statusColor = "#ef4444";
-                } else if (req.status === 1 && req.currentLvlCode === step.lvl_code) {
-                  statusText = t("status_pending_appr");
-                  statusColor = "var(--accent-primary)";
-                } else if ((req.status === 2) || (currentLvlIdx > -1 && idx < currentLvlIdx)) {
-                  statusText = t("btn_approve");
-                  statusColor = "#10b981";
-                } else {
-                  isNotReached = true;
-                }
-              }
-
-              if (isNotReached) return null;
-
-              // Extract info
-              let approverInfo = "";
-              if (log && log.approverName) {
-                approverInfo = `${log.approverEmpno ? log.approverEmpno + " - " : ""}${log.approverName}`;
-              } else if (!log && req.status === 1 && req.currentLvlCode === step.lvl_code && step.managers) {
-                approverInfo = step.managers.map((m: any) => `${m.empno ? m.empno + " - " : ""}${m.name}`).join(", ");
-              }
-              
-              // Handle custom styling for status tag
-              const statusTag = statusText ? (
-                <span style={{ 
-                  display: "inline-block",
-                  padding: "1px 4px", 
-                  fontSize: "0.65rem",
-                  fontWeight: "bold",
-                  border: `1px solid ${statusColor}`,
-                  color: statusColor,
-                  textTransform: "uppercase",
-                  marginRight: "6px",
-                  borderRadius: "2px"
-                }}>
-                  {statusText}
-                </span>
-              ) : null;
-
-              return (
-                <tr key={idx} style={{ borderBottom: "1px solid var(--glass-border)" }}>
-                  <td style={{ padding: "8px 12px", color: "var(--text-primary)", fontWeight: 500 }}>
-                    {step.lvl_name?.[language] || step.lvl_name?.vi || step.lvl_name?.en || step.lvl_code}
-                  </td>
-                  <td style={{ padding: "8px 12px", color: "var(--text-secondary)" }}>
-                    <div style={{ display: "flex", alignItems: "center" }}>
-                      {statusTag}
-                      <span>{approverInfo}</span>
-                    </div>
-                  </td>
-                  <td style={{ padding: "8px 12px", color: "var(--text-secondary)", fontStyle: "italic" }}>
-                    {log?.note || ""}
-                  </td>
-                  <td style={{ padding: "8px 12px", color: "var(--text-secondary)", fontFamily: "ui-monospace, SFMono-Regular, monospace" }}>
-                    {log?.actedAt || ""}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
-    );
   };
 
   if (authLoading) return null;
@@ -900,7 +901,7 @@ function RequestsPageContent() {
           <table className={styles.table}>
             <thead>
               <tr>
-                <th style={{ width: "160px" }} className={styles.filterableTh}>
+                <th style={{ width: "160px", whiteSpace: "nowrap" }} className={styles.filterableTh}>
                   <div className={styles.thContent}>
                     <span>{t("request_code").toUpperCase()}</span>
                     <div className={styles.filterDropdownContainer}>
@@ -961,9 +962,9 @@ function RequestsPageContent() {
                             <button
                               className={styles.filterActionBtn}
                               onClick={() => {
-                                  setSelectedCodesFilter([]);
-                                  setOpenFilterColumn(null);
-                                }}
+                                setSelectedCodesFilter([]);
+                                setOpenFilterColumn(null);
+                              }}
                             >
                               {t("clear_filter")}
                             </button>
@@ -979,7 +980,7 @@ function RequestsPageContent() {
                     </div>
                   </div>
                 </th>
-                <th className={styles.filterableTh}>
+                <th style={{ width: "60px", whiteSpace: "nowrap" }} className={styles.filterableTh}>
                   <div className={styles.thContent}>
                     <span>{t("date_range")?.toUpperCase() || "DATE RANGE"}</span>
                     <div className={styles.filterDropdownContainer}>
@@ -1058,8 +1059,8 @@ function RequestsPageContent() {
                     </div>
                   </div>
                 </th>
-                <th>{t("request_date")?.toUpperCase() || "NGÀY TẠO"}</th>
-                <th className={styles.filterableTh}>
+                <th style={{ width: "50px", whiteSpace: "nowrap" }}>{t("request_date")?.toUpperCase() || "NGÀY TẠO"}</th>
+                <th style={{ width: "160px" }} className={styles.filterableTh}>
                   <div className={styles.thContent}>
                     <span>{t("requester").toUpperCase()}</span>
                     <div className={styles.filterDropdownContainer}>
@@ -1138,8 +1139,8 @@ function RequestsPageContent() {
                     </div>
                   </div>
                 </th>
-                <th>{t("carrier_info")?.toUpperCase() || "NGƯỜI MANG HÀNG"}</th>
-                <th className={styles.filterableTh}>
+                <th style={{ width: "180px" }}>{t("carrier_info")?.toUpperCase() || "NGƯỜI MANG HÀNG"}</th>
+                <th style={{ width: "180px" }} className={styles.filterableTh}>
                   <div className={styles.thContent}>
                     <span>{t("items")?.toUpperCase() || "ITEMS"}</span>
                     <div className={styles.filterDropdownContainer}>
@@ -1218,7 +1219,7 @@ function RequestsPageContent() {
                     </div>
                   </div>
                 </th>
-                <th className={styles.filterableTh}>
+                <th style={{ width: "180px" }} className={styles.filterableTh}>
                   <div className={styles.thContent}>
                     <span>{t("destination")?.toUpperCase() || "DESTINATION"}</span>
                     <div className={styles.filterDropdownContainer}>
@@ -1297,7 +1298,7 @@ function RequestsPageContent() {
                     </div>
                   </div>
                 </th>
-                <th className={styles.filterableTh}>
+                <th style={{ width: "135px", whiteSpace: "nowrap" }} className={styles.filterableTh}>
                   <div className={styles.thContent}>
                     <span>{t("status").toUpperCase()}</span>
                     <div className={styles.filterDropdownContainer}>
@@ -1371,8 +1372,8 @@ function RequestsPageContent() {
                     </div>
                   </div>
                 </th>
-                <th style={{ width: "90px", textAlign: "center" }}>{t("history").toUpperCase()}</th>
-                <th style={{ width: "130px", textAlign: "right" }}>{t("col_action").toUpperCase()}</th>
+                <th style={{ width: "70px", textAlign: "center", whiteSpace: "nowrap" }}>{t("history").toUpperCase()}</th>
+                <th style={{ width: "80px", textAlign: "center", whiteSpace: "nowrap" }}>{t("col_action").toUpperCase()}</th>
               </tr>
             </thead>
             <tbody>
@@ -1381,7 +1382,7 @@ function RequestsPageContent() {
                   <td colSpan={10}>
                     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "1rem", padding: "4rem 0" }}>
                       <div className={styles.spin} style={{ width: "32px", height: "32px", border: "3px solid var(--accent-primary)", borderTopColor: "transparent", borderRadius: "50%" }}></div>
-                      <div style={{ color: "var(--text-secondary)", fontSize: "0.85rem", fontFamily: "ui-monospace, SFMono-Regular, monospace" }}>
+                      <div style={{ color: "var(--text-secondary)", fontSize: "0.85rem", }}>
                         {t("loading_data")}
                       </div>
                     </div>
@@ -1392,11 +1393,24 @@ function RequestsPageContent() {
                   {paginatedRequests.map((item, index) => (
                 <tr
                   key={`${item.id}-${index}`}
-                  onClick={() => handleViewDetails(item)}
-                  style={{ cursor: "pointer" }}
                 >
-                  <td style={{ fontWeight: 700, fontFamily: 'ui-monospace, SFMono-Regular, monospace' }}>
-                    {item.requestCode || `#${item.id}`}
+                  <td style={{ fontWeight: 700, }}>
+                    <span
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleViewDetails(item);
+                      }}
+                      style={{
+                        cursor: "pointer",
+                        color: "var(--accent-primary)",
+                        display: "inline-block"
+                      }}
+                      onMouseEnter={(e) => (e.currentTarget.style.textDecoration = "underline")}
+                      onMouseLeave={(e) => (e.currentTarget.style.textDecoration = "none")}
+                      title={t("details")}
+                    >
+                      {item.requestCode || `#${item.id}`}
+                    </span>
                   </td>
                   <td>
                     <div style={{ fontWeight: 600, color: "var(--text-primary)" }}>{item.startDate || item.requestDate} ➜ {item.endDate || item.requestDate}</div>
@@ -1406,7 +1420,7 @@ function RequestsPageContent() {
                   </td>
                   <td>
                     <div style={{ fontWeight: 700, color: "var(--text-primary)" }}>{item.requesterName}</div>
-                    <div style={{ fontSize: "0.75rem", color: "var(--text-secondary)", marginTop: "2px", fontFamily: "ui-monospace, SFMono-Regular, monospace" }}>
+                    <div style={{ fontSize: "0.75rem", color: "var(--text-secondary)", marginTop: "2px", }}>
                       {item.requesterEmpno ? `ID: ${item.requesterEmpno}` : ""}
                       {item.requesterEmpno && item.requesterDept ? " | " : ""}
                       {item.requesterDept || "N/A"}
@@ -1448,7 +1462,6 @@ function RequestsPageContent() {
                             </span>
                             <span style={{ 
                               fontSize: "0.725rem", 
-                              fontFamily: "ui-monospace, SFMono-Regular, monospace", 
                               color: "var(--accent-primary)", 
                               background: "color-mix(in srgb, var(--accent-primary) 12%, transparent)", 
                               border: "1px solid color-mix(in srgb, var(--accent-primary) 25%, transparent)",
@@ -1506,14 +1519,8 @@ function RequestsPageContent() {
                       // Short label mapping for common level codes
                       const lvlShortName: Record<string, string> = {
                         dept_manager: "Dept",
-                        custom_dept_manager: "Dept",
-                        mpr_custom_dept: "Dept",
                         division_manager: "Division",
-                        custom_division_manager: "Division",
                         ps_manager: "PS",
-                        vg_visitor_approval: "PS",
-                        sma_lvl2: "SMA",
-                        ras_target_manager: "RAS",
                       };
 
                       // Build dynamic badge label for pending requests: "Waiting Dept", "Waiting PS", ...
@@ -1528,7 +1535,7 @@ function RequestsPageContent() {
                         <div
                           style={{ display: "inline-block", position: "relative" }}
                           onMouseEnter={(e) => {
-                            if (item.status === 1 || (item.status === 3 && item.rejectReason)) {
+                            if (item.status === 1 || (item.status === 3 && item.rejectReason) || (item.status === 4 && item.returnReason)) {
                               handleStatusMouseEnter(item, e);
                             }
                           }}
@@ -1641,6 +1648,39 @@ function RequestsPageContent() {
                               </div>
                             </div>
                           )}
+
+                          {/* Tooltip — shown on hover for returned status with reason */}
+                          {item.status === 4 && hoveredRequestId === item.id && tooltipPos && item.returnReason && (
+                            <div style={{
+                              position: "fixed",
+                              top: `${tooltipPos.y - 10}px`,
+                              left: `${tooltipPos.x}px`,
+                              transform: "translate(-50%, -100%)",
+                              background: "var(--bg-secondary)",
+                              border: "1px solid rgba(245,158,11,0.4)",
+                              borderRadius: "8px",
+                              padding: "10px 14px",
+                              boxShadow: "0 12px 30px -5px rgba(0,0,0,0.6), 0 0 0 1px rgba(245,158,11,0.15)",
+                              zIndex: 9999,
+                              width: "max-content",
+                              minWidth: "200px",
+                              maxWidth: "300px",
+                              display: "flex",
+                              flexDirection: "column",
+                              gap: "4px",
+                              fontSize: "12px",
+                            }}>
+                              <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                                <span style={{ width: "7px", height: "7px", borderRadius: "50%", background: "#f59e0b", display: "inline-block", flexShrink: 0, boxShadow: "0 0 6px rgba(245,158,11,0.6)" }} />
+                                <span style={{ fontSize: "9px", fontWeight: "700", color: "#f59e0b", textTransform: "uppercase", letterSpacing: "0.07em" }}>
+                                  {t("return_reason")}
+                                </span>
+                              </div>
+                              <div style={{ fontWeight: "600", color: "var(--text-primary)", fontSize: "13px", paddingLeft: "13px", whiteSpace: "pre-wrap" }}>
+                                {item.returnReason}
+                              </div>
+                            </div>
+                          )}
                         </div>
                       );
                     })()}
@@ -1666,6 +1706,7 @@ function RequestsPageContent() {
                         canApprove={!!(user && isUserApprover(item, user))}
                         onApprove={handleDirectApprove}
                         onReject={handleDirectReject}
+                        onReturn={handleDirectReturn}
                         onDetail={handleViewDetails}
                         onRenew={handleRenewRequest}
                         onPrint={handlePrint}
@@ -1766,6 +1807,8 @@ function RequestsPageContent() {
         request={selectedRequest}
         onClose={() => setSelectedRequest(null)}
         onRenew={handleRenewRequest}
+        onEdit={handleEditResubmit}
+        user={user}
         t={t}
         language={language}
       />
@@ -1785,6 +1828,17 @@ function RequestsPageContent() {
         rejectReasonInput={rejectReasonInput}
         setRejectReasonInput={setRejectReasonInput}
         submitReject={submitReject}
+        actionLoading={actionLoading}
+        t={t}
+      />
+
+      {/* ── Custom Return Modal ── */}
+      <ReturnModal
+        isOpen={returnModalOpen}
+        onClose={() => setReturnModalOpen(false)}
+        returnReasonInput={returnReasonInput}
+        setReturnReasonInput={setReturnReasonInput}
+        submitReturn={submitReturn}
         actionLoading={actionLoading}
         t={t}
       />

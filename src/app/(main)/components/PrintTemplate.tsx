@@ -98,9 +98,9 @@ export default function PrintTemplate({ request, id }: { request: RequestItem | 
               <div className="subtitle-text">物品攜出單</div>
             </td>
             <td rowSpan={3} style={{ width: "20%" }}>
-              {request.status === 2 && request.requestCode ? (
+              {request.status === 2 && request.qrCode ? (
                 <div className="qr-container">
-                  <QRCodeSVG value={request.requestCode} size={90} />
+                  <QRCodeSVG value={request.qrCode} size={90} />
                   <div style={{ fontSize: '10pt', marginTop: '4px' }}>{request.requestCode}</div>
                 </div>
               ) : (

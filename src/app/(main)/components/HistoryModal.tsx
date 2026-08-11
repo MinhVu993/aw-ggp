@@ -23,90 +23,105 @@ export default function HistoryModal({ request, onClose, t, language }: HistoryM
           <thead>
             <tr style={{ borderBottom: "1px solid var(--glass-border)", color: "var(--text-secondary)", backgroundColor: "var(--bg-tertiary)" }}>
               <th style={{ padding: "8px 12px", fontWeight: 600 }}>{t("history_level")}</th>
-              <th style={{ padding: "8px 12px", fontWeight: 600 }}>{t("history_info")}</th>
+              <th style={{ padding: "8px 12px", fontWeight: 600 }}>{t("history_status")}</th>
+              <th style={{ padding: "8px 12px", fontWeight: 600 }}>{t("history_empno")}</th>
+              <th style={{ padding: "8px 12px", fontWeight: 600 }}>{t("history_approver")}</th>
               <th style={{ padding: "8px 12px", fontWeight: 600 }}>{t("history_comment")}</th>
               <th style={{ padding: "8px 12px", fontWeight: 600 }}>{t("history_time")}</th>
             </tr>
           </thead>
           <tbody>
-            {req.flowSnapshot?.map((step: any, idx: number) => {
-              const log = req.approvalLogs?.find((l: any) => l.lvlCode === step.lvl_code);
-              const currentLvlIdx = req.flowSnapshot?.findIndex((s: any) => s.lvl_code === req.currentLvlCode) ?? -1;
+            {(() => {
+              const rows: any[] = [];
               
-              let isNotReached = false;
-              let statusText = "";
-              let statusColor = "";
-              
-              if (log) {
-                if (log.action === "approved") {
-                  statusText = t("btn_approve");
-                  statusColor = "#10b981";
-                } else {
-                  statusText = t("btn_reject");
-                  statusColor = "#ef4444";
+              // 1. Add all actual approval logs
+              req.approvalLogs?.forEach((log: any) => {
+                const step = req.flowSnapshot?.find((s: any) => s.lvl_code === log.lvlCode || s.lvl_code === log.stepName);
+                let lvlName = step ? (step.lvl_name?.[language] || step.lvl_name?.vi || step.lvl_name?.en || step.lvl_code) : (log.stepName || "Unknown");
+                
+                if (log.stepName === 'gate_check' || log.lvlCode === 'gate_check' || log.action === 'GATE_CHECK_PASSED') {
+                  lvlName = language === 'vi' ? 'Bảo vệ (Cổng)' : (language === 'zh' ? '警卫 (门禁)' : 'Security Guard');
                 }
-              } else {
-                if (req.status === 3 && req.currentLvlCode === step.lvl_code) {
-                  statusText = t("btn_reject");
-                  statusColor = "#ef4444";
-                } else if (req.status === 1 && req.currentLvlCode === step.lvl_code) {
-                  statusText = t("status_pending_appr");
-                  statusColor = "var(--accent-primary)";
-                } else if ((req.status === 2) || (currentLvlIdx > -1 && idx < currentLvlIdx)) {
+
+                let statusText = log.action;
+                let statusColor = "#10b981";
+                if (log.action === "APPROVE" || log.action === "approved") {
                   statusText = t("btn_approve");
                   statusColor = "#10b981";
-                } else {
-                  isNotReached = true;
+                } else if (log.action === "REJECT" || log.action === "rejected") {
+                  statusText = t("btn_reject");
+                  statusColor = "#ef4444";
+                } else if (log.action === "RETURN" || log.action === "returned") {
+                  statusText = t("btn_return");
+                  statusColor = "#f59e0b";
+                } else if (log.action === "GATE_CHECK_PASSED") {
+                  statusText = language === 'vi' ? 'ĐÃ QUA CỔNG' : (language === 'zh' ? '已过闸' : 'PASSED GATE');
+                  statusColor = "#10b981";
+                }
+
+                rows.push({
+                  lvlName,
+                  statusText,
+                  statusColor,
+                  approverEmpno: log.approverEmpno || "-",
+                  approverName: log.approverName || "-",
+                  comment: log.note || "-",
+                  timeStr: log.actedAt || "-"
+                });
+              });
+
+              // 2. Add pending step ONLY if request is actively pending manager approval
+              if (req.status === 1) {
+                const currentLvlIdx = req.flowSnapshot?.findIndex((s: any) => s.lvl_code === req.currentLvlCode) ?? -1;
+                if (currentLvlIdx > -1) {
+                  const step = req.flowSnapshot![currentLvlIdx];
+                  const lvlName = step.lvl_name?.[language] || step.lvl_name?.vi || step.lvl_name?.en || step.lvl_code;
+                  rows.push({
+                    lvlName,
+                    statusText: t("status_pending_appr"),
+                    statusColor: "var(--accent-primary)",
+                    approverEmpno: step.managers?.map((m: any) => m.empno).filter(Boolean).join(", ") || "-",
+                    approverName: step.managers?.map((m: any) => m.full_name || m.name).filter(Boolean).join(", ") || "-",
+                    comment: "-",
+                    timeStr: "-"
+                  });
                 }
               }
 
-              if (isNotReached) return null;
-
-              // Extract info
-              let approverInfo = "";
-              if (log && log.approverName) {
-                approverInfo = `${log.approverEmpno ? log.approverEmpno + " - " : ""}${log.approverName}`;
-              } else if (!log && req.status === 1 && req.currentLvlCode === step.lvl_code && step.managers) {
-                approverInfo = step.managers.map((m: any) => `${m.empno ? m.empno + " - " : ""}${m.name}`).join(", ");
-              }
-              
-              // Handle custom styling for status tag
-              const statusTag = statusText ? (
-                <span style={{ 
-                  display: "inline-block",
-                  padding: "1px 4px", 
-                  fontSize: "0.65rem",
-                  fontWeight: "bold",
-                  border: `1px solid ${statusColor}`,
-                  color: statusColor,
-                  textTransform: "uppercase",
-                  marginRight: "6px",
-                  borderRadius: "2px"
-                }}>
-                  {statusText}
-                </span>
-              ) : null;
-
-              return (
+              return rows.map((row, idx) => (
                 <tr key={idx} style={{ borderBottom: "1px solid var(--glass-border)" }}>
-                  <td style={{ padding: "8px 12px", color: "var(--text-primary)", fontWeight: 500 }}>
-                    {step.lvl_name?.[language] || step.lvl_name?.vi || step.lvl_name?.en || step.lvl_code}
+                  <td style={{ padding: "8px 12px", color: "var(--text-primary)", fontWeight: 600 }}>
+                    {row.lvlName}
+                  </td>
+                  <td style={{ padding: "8px 12px" }}>
+                    <span style={{ 
+                      display: "inline-block",
+                      padding: "2px 6px", 
+                      fontSize: "0.7rem",
+                      fontWeight: "bold",
+                      border: `1px solid ${row.statusColor}`,
+                      color: row.statusColor,
+                      textTransform: "uppercase",
+                      borderRadius: "3px"
+                    }}>
+                      {row.statusText}
+                    </span>
                   </td>
                   <td style={{ padding: "8px 12px", color: "var(--text-secondary)" }}>
-                    <div style={{ display: "flex", alignItems: "center" }}>
-                      {statusTag}
-                      <span>{approverInfo}</span>
-                    </div>
+                    {row.approverEmpno}
                   </td>
-                  <td style={{ padding: "8px 12px", color: "var(--text-secondary)", fontStyle: "italic" }}>
-                    {log?.note || ""}
+                  <td style={{ padding: "8px 12px", color: "var(--text-primary)", fontWeight: 500 }}>
+                    {row.approverName}
                   </td>
-                  <td style={{ padding: "8px 12px", color: "var(--text-secondary)", fontFamily: "ui-monospace, SFMono-Regular, monospace" }}>
-                    {log?.actedAt || ""}
+                  <td style={{ padding: "8px 12px", color: "var(--text-secondary)", fontStyle: row.comment !== "-" ? "normal" : "italic" }}>
+                    {row.comment}
+                  </td>
+                  <td style={{ padding: "8px 12px", color: "var(--text-secondary)", whiteSpace: "nowrap" }}>
+                    {row.timeStr}
                   </td>
                 </tr>
-              );
-            })}
+              ));
+            })()}
           </tbody>
         </table>
       </div>
@@ -126,13 +141,13 @@ export default function HistoryModal({ request, onClose, t, language }: HistoryM
           </button>
         </div>
         <div className={styles.modalBody} style={{ maxHeight: "60vh", overflowY: "auto" }}>
-          <div style={{ marginBottom: "1rem", fontSize: "0.85rem", color: "var(--text-secondary)", fontFamily: "ui-monospace, SFMono-Regular, monospace" }}>
+          <div style={{ marginBottom: "1rem", fontSize: "0.85rem", color: "var(--text-secondary)", }}>
             {t("request_code")}: <strong style={{ color: "var(--text-primary)" }}>{request.requestCode || `#${request.id}`}</strong>
           </div>
           {request.flowSnapshot && request.flowSnapshot.length > 0 ? (
             renderHistoryTable(request)
           ) : (
-            <div style={{ textAlign: "center", padding: "2rem", color: "var(--text-secondary)", fontFamily: "ui-monospace, SFMono-Regular, monospace" }}>
+            <div style={{ textAlign: "center", padding: "2rem", color: "var(--text-secondary)", }}>
               {t("no_flow_data")}
             </div>
           )}
