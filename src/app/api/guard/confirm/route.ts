@@ -16,7 +16,15 @@ export async function POST(request: Request) {
 
     // Check request exists and is in APPROVED_WAITING_GATE state
     const checkRes = await client.query(
-      `SELECT request_id, request_no, status FROM goods_out_requests WHERE request_id = $1`,
+      `SELECT 
+        request_id, 
+        request_no, 
+        status, 
+        to_char(start_date, 'YYYY-MM-DD') as start_date_str,
+        to_char(end_date, 'YYYY-MM-DD') as end_date_str,
+        to_char(CURRENT_DATE, 'YYYY-MM-DD') as today_str
+       FROM goods_out_requests 
+       WHERE request_id = $1`,
       [requestId]
     );
 
@@ -29,6 +37,22 @@ export async function POST(request: Request) {
     if (currentReq.status === 'COMPLETED') {
       await client.query('ROLLBACK');
       return NextResponse.json({ success: false, error: 'Đơn hàng này đã được xác nhận qua cổng trước đó rồi' }, { status: 400 });
+    }
+
+    if (currentReq.end_date_str && currentReq.end_date_str < currentReq.today_str) {
+      await client.query('ROLLBACK');
+      return NextResponse.json({ 
+        success: false, 
+        error: `Đơn hàng này đã hết hạn xuất hàng qua cổng (Hạn chót: ${currentReq.end_date_str})` 
+      }, { status: 400 });
+    }
+
+    if (currentReq.start_date_str && currentReq.start_date_str > currentReq.today_str) {
+      await client.query('ROLLBACK');
+      return NextResponse.json({ 
+        success: false, 
+        error: `Chưa đến thời hạn xuất hàng qua cổng (Bắt đầu từ: ${currentReq.start_date_str})` 
+      }, { status: 400 });
     }
 
     // Ensure columns exist

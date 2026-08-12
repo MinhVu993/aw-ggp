@@ -182,7 +182,7 @@ export const TRANSLATIONS: Translations = {
   carrier_info: { vi: 'Người mang hàng ra cổng', en: 'Carrier Information', zh: '携出人信息' },
   carrier_empno: { vi: 'Mã NV người mang', en: 'Carrier EmpNo', zh: '携出人工号' },
   carrier_name: { vi: 'Tên người mang', en: 'Carrier Name', zh: '携出人姓名' },
-  date_range: { vi: 'Thời hạn (Start - End)', en: 'Validity (Start - End)', zh: '有效期 (开始 - 结束)' },
+  date_range: { vi: 'Thời hạn', en: 'Validity', zh: '有效期' },
   rejection_reason: { vi: 'LÝ DO TỪ CHỐI', en: 'REJECTION REASON', zh: '拒绝原因' },
   view_history: { vi: 'Xem lộ trình', en: 'View History', zh: '查看历史' },
   renew: { vi: 'Gia hạn / Copy đơn', en: 'Renew / Copy Request', zh: '续签 / 复制请求' },

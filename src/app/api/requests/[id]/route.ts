@@ -1,6 +1,20 @@
 import { NextResponse } from 'next/server';
 import { pool } from '@/lib/db';
 
+function formatDateSafe(val: any): string {
+  if (!val) return '';
+  if (typeof val === 'string') {
+    return val.split('T')[0];
+  }
+  if (val instanceof Date) {
+    const y = val.getFullYear();
+    const m = String(val.getMonth() + 1).padStart(2, '0');
+    const d = String(val.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  }
+  return String(val);
+}
+
 export async function GET(
   request: Request,
   context: { params: Promise<{ id: string }> }
@@ -18,6 +32,9 @@ export async function GET(
       const query = `
         SELECT 
           r.*,
+          to_char(r.request_date, 'YYYY-MM-DD') as request_date_str,
+          to_char(r.start_date, 'YYYY-MM-DD') as start_date_str,
+          to_char(r.end_date, 'YYYY-MM-DD') as end_date_str,
           (
             SELECT json_agg(
               json_build_object(
@@ -25,7 +42,8 @@ export async function GET(
                 'name', i.item_name,
                 'quantity', i.quantity,
                 'unit', i.unit,
-                'purpose', i.purpose
+                'purpose', i.purpose,
+                'images', COALESCE(i.images, '[]'::jsonb)
               )
             )
             FROM goods_out_items i
@@ -75,9 +93,9 @@ export async function GET(
         reason: '', 
         requester_id: 0, 
         status: statusNum,
-        requestDate: new Date(row.request_date).toISOString().split('T')[0],
-        startDate: new Date(row.start_date).toISOString().split('T')[0],
-        endDate: new Date(row.end_date).toISOString().split('T')[0],
+        requestDate: row.request_date_str || formatDateSafe(row.request_date),
+        startDate: row.start_date_str || formatDateSafe(row.start_date),
+        endDate: row.end_date_str || formatDateSafe(row.end_date),
         carrierEmpno: row.carrier_empno,
         carrierName: row.carrier_name,
         rejectReason: row.reject_reason,

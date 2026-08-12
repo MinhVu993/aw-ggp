@@ -1,9 +1,10 @@
 "use client";
 
 import { useTranslation } from "@/context/LanguageContext";
-import React from "react";
+import React, { useState } from "react";
 import { ScannedRequest } from "../page";
-import { Check, X, User, MapPin, Package, CalendarBlank, WarningCircle, CheckCircle, ShieldCheck } from "@phosphor-icons/react";
+import { Check, X, User, MapPin, Package, CalendarBlank, WarningCircle, CheckCircle, ShieldCheck, Camera } from "@phosphor-icons/react";
+import ImageCarouselModal from "@/components/ui/ImageCarouselModal";
 
 interface RequestDetailsPanelProps {
   data: ScannedRequest;
@@ -14,15 +15,24 @@ interface RequestDetailsPanelProps {
 
 export default function RequestDetailsPanel({ data, onConfirm, onCancel, loading }: RequestDetailsPanelProps) {
   const { t } = useTranslation();
+  const [previewModal, setPreviewModal] = useState<{ images: string[]; initialIndex: number; title: string } | null>(null);
   
-  const today = new Date().toISOString().split('T')[0];
-  const isDateValid = data.startDate && data.endDate 
-    ? (data.startDate <= today && data.endDate >= today)
-    : true;
+  const getLocalToday = () => {
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = String(now.getMonth() + 1).padStart(2, '0');
+    const d = String(now.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  };
+  const today = getLocalToday();
+
+  const isExpired = Boolean(data.endDate && data.endDate < today);
+  const isTooEarly = Boolean(data.startDate && data.startDate > today);
+  const isDateValid = !isExpired && !isTooEarly;
 
   const isApproved = data.status === "APPROVED_WAITING_GATE";
   const isAlreadyPassed = data.status === "COMPLETED" || data.isQrUsed;
-  const canPassGate = isApproved && !isAlreadyPassed;
+  const canPassGate = isApproved && !isAlreadyPassed && isDateValid;
 
   return (
     <div style={{
@@ -56,23 +66,7 @@ export default function RequestDetailsPanel({ data, onConfirm, onCancel, loading
         </div>
 
         <div>
-          {canPassGate && (
-            <div style={{
-              background: "rgba(16, 185, 129, 0.15)",
-              color: "#10b981",
-              border: "1px solid #10b981",
-              padding: "5px 12px",
-              fontSize: "0.85rem",
-              fontWeight: 700,
-              display: "flex",
-              alignItems: "center",
-              gap: "6px"
-            }}>
-              <CheckCircle size={18} weight="fill" />
-              <span>HỢP LỆ — ĐỦ ĐIỀU KIỆN QUA CỔNG</span>
-            </div>
-          )}
-          {isAlreadyPassed && (
+          {isAlreadyPassed ? (
             <div style={{
               background: "rgba(59, 130, 246, 0.15)",
               color: "#3b82f6",
@@ -87,8 +81,7 @@ export default function RequestDetailsPanel({ data, onConfirm, onCancel, loading
               <ShieldCheck size={18} weight="fill" />
               <span>ĐÃ XÁC NHẬN QUA CỔNG</span>
             </div>
-          )}
-          {!isApproved && !isAlreadyPassed && (
+          ) : !isApproved ? (
             <div style={{
               background: "rgba(239, 68, 68, 0.15)",
               color: "#ef4444",
@@ -102,6 +95,51 @@ export default function RequestDetailsPanel({ data, onConfirm, onCancel, loading
             }}>
               <WarningCircle size={18} weight="fill" />
               <span>CHƯA DUYỆT XONG ({data.status})</span>
+            </div>
+          ) : isExpired ? (
+            <div style={{
+              background: "rgba(239, 68, 68, 0.15)",
+              color: "#ef4444",
+              border: "1px solid #ef4444",
+              padding: "5px 12px",
+              fontSize: "0.85rem",
+              fontWeight: 700,
+              display: "flex",
+              alignItems: "center",
+              gap: "6px"
+            }}>
+              <WarningCircle size={18} weight="fill" />
+              <span>KHÔNG HỢP LỆ — ĐƠN ĐÃ HẾT HẠN</span>
+            </div>
+          ) : isTooEarly ? (
+            <div style={{
+              background: "rgba(245, 158, 11, 0.15)",
+              color: "#f59e0b",
+              border: "1px solid #f59e0b",
+              padding: "5px 12px",
+              fontSize: "0.85rem",
+              fontWeight: 700,
+              display: "flex",
+              alignItems: "center",
+              gap: "6px"
+            }}>
+              <WarningCircle size={18} weight="fill" />
+              <span>KHÔNG HỢP LỆ — CHƯA ĐẾN NGÀY RA CỔNG</span>
+            </div>
+          ) : (
+            <div style={{
+              background: "rgba(16, 185, 129, 0.15)",
+              color: "#10b981",
+              border: "1px solid #10b981",
+              padding: "5px 12px",
+              fontSize: "0.85rem",
+              fontWeight: 700,
+              display: "flex",
+              alignItems: "center",
+              gap: "6px"
+            }}>
+              <CheckCircle size={18} weight="fill" />
+              <span>HỢP LỆ — ĐỦ ĐIỀU KIỆN QUA CỔNG</span>
             </div>
           )}
         </div>
@@ -133,18 +171,18 @@ export default function RequestDetailsPanel({ data, onConfirm, onCancel, loading
 
         {/* Card 2: Validity Dates */}
         <div style={{
-          background: "var(--bg-primary)",
-          border: "1px solid var(--glass-border)",
+          background: isExpired ? "rgba(239, 68, 68, 0.08)" : isTooEarly ? "rgba(245, 158, 11, 0.08)" : "var(--bg-primary)",
+          border: isExpired ? "1px solid #ef4444" : isTooEarly ? "1px solid #f59e0b" : "1px solid var(--glass-border)",
           padding: "0.6rem 0.85rem",
           display: "flex",
           flexDirection: "column",
           gap: "2px"
         }}>
-          <div style={{ fontSize: "0.72rem", color: "var(--text-secondary)", display: "flex", alignItems: "center", gap: "4px", fontWeight: 700, textTransform: "uppercase" }}>
-            <CalendarBlank size={15} color="var(--accent-primary)" />
-            {t("date_range")}
+          <div style={{ fontSize: "0.72rem", color: isExpired ? "#ef4444" : isTooEarly ? "#f59e0b" : "var(--text-secondary)", display: "flex", alignItems: "center", gap: "4px", fontWeight: 700, textTransform: "uppercase" }}>
+            <CalendarBlank size={15} color={isExpired ? "#ef4444" : isTooEarly ? "#f59e0b" : "var(--accent-primary)"} />
+            {t("date_range")} {isExpired ? "(HẾT HẠN)" : isTooEarly ? "(CHƯA ĐẾN HẠN)" : ""}
           </div>
-          <div style={{ fontSize: "1rem", fontWeight: 800, color: !isDateValid ? "#ef4444" : "var(--accent-primary)" }}>
+          <div style={{ fontSize: "1rem", fontWeight: 800, color: isExpired ? "#ef4444" : isTooEarly ? "#f59e0b" : "var(--accent-primary)" }}>
             {data.startDate || "—"}  ➜  {data.endDate || "—"}
           </div>
         </div>
@@ -195,8 +233,9 @@ export default function RequestDetailsPanel({ data, onConfirm, onCancel, loading
           marginBottom: "0.35rem",
           display: "flex",
           alignItems: "center",
-          gap: "0.4rem",
-          color: "var(--text-primary)"
+          gap: "6px",
+          color: "var(--text-primary)",
+          textTransform: "uppercase"
         }}>
           <Package size={16} color="var(--accent-primary)" weight="bold" />
           <span>{t("items_list")} ({data.items ? data.items.length : 0})</span>
@@ -211,10 +250,11 @@ export default function RequestDetailsPanel({ data, onConfirm, onCancel, loading
           <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left" }}>
             <thead style={{ position: "sticky", top: 0, background: "var(--bg-secondary)", borderBottom: "1px solid var(--glass-border)", zIndex: 5 }}>
               <tr>
-                <th style={{ padding: "10px 14px", fontSize: "0.85rem", color: "var(--text-secondary)", fontWeight: 700, width: "50px" }}>STT</th>
-                <th style={{ padding: "10px 14px", fontSize: "0.85rem", color: "var(--text-secondary)", fontWeight: 700 }}>Tên hàng / Vật liệu</th>
-                <th style={{ padding: "10px 14px", fontSize: "0.85rem", color: "var(--text-secondary)", fontWeight: 700, width: "20%" }}>Số lượng</th>
-                <th style={{ padding: "10px 14px", fontSize: "0.85rem", color: "var(--text-secondary)", fontWeight: 700, width: "30%" }}>Mục đích mang ra</th>
+                <th style={{ padding: "10px 14px", fontSize: "0.85rem", color: "var(--text-secondary)", fontWeight: 700, width: "45px" }}>STT</th>
+                <th style={{ padding: "10px 14px", fontSize: "0.85rem", color: "var(--text-secondary)", fontWeight: 700, width: "25%" }}>Tên hàng / Vật liệu</th>
+                <th style={{ padding: "10px 14px", fontSize: "0.85rem", color: "var(--text-secondary)", fontWeight: 700, width: "15%" }}>Số lượng</th>
+                <th style={{ padding: "10px 14px", fontSize: "0.85rem", color: "var(--text-secondary)", fontWeight: 700, width: "25%" }}>Mục đích mang ra</th>
+                <th style={{ padding: "10px 14px", fontSize: "0.85rem", color: "var(--text-secondary)", fontWeight: 700, width: "35%" }}>Ảnh mẫu đối chiếu</th>
               </tr>
             </thead>
             <tbody>
@@ -241,11 +281,41 @@ export default function RequestDetailsPanel({ data, onConfirm, onCancel, loading
                     <td style={{ padding: "12px 14px", fontSize: "0.95rem", color: "var(--text-secondary)" }}>
                       {item.purpose || "—"}
                     </td>
+                    <td style={{ padding: "12px 14px" }}>
+                      {item.images && item.images.length > 0 ? (
+                        <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", alignItems: "center" }}>
+                          {item.images.map((imgUrl, imgIdx) => (
+                            <img
+                              key={imgIdx}
+                              src={imgUrl}
+                              alt={`Angle ${imgIdx + 1}`}
+                              style={{
+                                width: "42px",
+                                height: "42px",
+                                objectFit: "cover",
+                                borderRadius: "4px",
+                                border: "1px solid var(--accent-primary)",
+                                cursor: "pointer",
+                                boxShadow: "0 2px 6px rgba(0,0,0,0.3)"
+                              }}
+                              title="Bấm để xem ảnh phóng to & lướt các góc chụp"
+                              onClick={() => setPreviewModal({
+                                images: item.images || [],
+                                initialIndex: imgIdx,
+                                title: `${item.name || `Vật tư ${idx + 1}`} (${(item.images || []).length} góc chụp)`
+                              })}
+                            />
+                          ))}
+                        </div>
+                      ) : (
+                        <span style={{ fontSize: "0.8rem", color: "var(--text-secondary)", opacity: 0.6 }}>Không có ảnh</span>
+                      )}
+                    </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan={4} style={{ padding: "1rem", textAlign: "center", color: "var(--text-secondary)", fontSize: "0.85rem" }}>
+                  <td colSpan={5} style={{ padding: "1rem", textAlign: "center", color: "var(--text-secondary)", fontSize: "0.85rem" }}>
                     Không có danh sách hàng hóa
                   </td>
                 </tr>
@@ -288,10 +358,10 @@ export default function RequestDetailsPanel({ data, onConfirm, onCancel, loading
             height: "46px",
             padding: "0 1.25rem",
             border: "none",
-            background: canPassGate ? "#10b981" : "var(--glass-border)",
-            color: canPassGate ? "white" : "var(--text-secondary)",
+            background: canPassGate ? "#10b981" : "rgba(239, 68, 68, 0.2)",
+            color: canPassGate ? "white" : "#ef4444",
             fontWeight: 800,
-            fontSize: "1rem",
+            fontSize: "0.95rem",
             cursor: (loading || !canPassGate) ? "not-allowed" : "pointer",
             display: "flex",
             alignItems: "center",
@@ -300,10 +370,44 @@ export default function RequestDetailsPanel({ data, onConfirm, onCancel, loading
             boxShadow: canPassGate ? "0 4px 14px rgba(16, 185, 129, 0.4)" : "none"
           }}
         >
-          <Check size={20} weight="bold" />
-          {loading ? `${t("processing")}...` : isAlreadyPassed ? "ĐÃ XUẤT QUA CỔNG" : "XÁC NHẬN CHO QUA CỔNG"}
+          {canPassGate ? (
+            <>
+              <Check size={18} weight="bold" />
+              <span>XÁC NHẬN CHO QUA CỔNG</span>
+            </>
+          ) : isExpired ? (
+            <>
+              <X size={18} weight="bold" />
+              <span>ĐƠN ĐÃ HẾT HẠN — KHÔNG THỂ CHO QUA</span>
+            </>
+          ) : isTooEarly ? (
+            <>
+              <X size={18} weight="bold" />
+              <span>CHƯA ĐẾN NGÀY — KHÔNG THỂ CHO QUA</span>
+            </>
+          ) : isAlreadyPassed ? (
+            <>
+              <ShieldCheck size={18} weight="bold" />
+              <span>ĐÃ QUA CỔNG TRƯỚC ĐÓ</span>
+            </>
+          ) : (
+            <>
+              <WarningCircle size={18} weight="bold" />
+              <span>CHƯA ĐỦ ĐIỀU KIỆN QUA CỔNG</span>
+            </>
+          )}
         </button>
       </div>
+
+      {/* Embla Carousel Modal for Guard */}
+      {previewModal && (
+        <ImageCarouselModal
+          images={previewModal.images}
+          initialIndex={previewModal.initialIndex}
+          title={previewModal.title}
+          onClose={() => setPreviewModal(null)}
+        />
+      )}
     </div>
   );
 }

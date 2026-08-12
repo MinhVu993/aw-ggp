@@ -157,7 +157,7 @@
     color: var(--text-secondary);
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    }
+}
 
 .userLabel {
     font-size: 0.85rem;
@@ -171,10 +171,8 @@
 /* ── Language Toggle ── */
 .languageToggle {
     display: flex;
-    background: var(--bg-primary);
-    border: 1px solid var(--glass-border);
+    background: transparent;
     padding: 2px;
-    border-radius: 0;
     gap: 2px;
 }
 
@@ -185,7 +183,7 @@
     font-weight: 800;
     color: var(--text-secondary);
     padding: 0.35rem 0.6rem;
-    border-radius: 8px;
+    border-radius: 6px;
     cursor: pointer;
     transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
     min-width: 32px;
@@ -193,13 +191,13 @@
 
 .langBtn:hover {
     color: var(--text-primary);
-    background: rgba(99, 102, 241, 0.05);
+    background: rgba(255, 255, 255, 0.05);
 }
 
 .langActive {
-    background: color-mix(in srgb, var(--accent-primary) 10%, transparent) !important;
+    background: color-mix(in srgb, var(--accent-primary) 15%, transparent) !important;
     color: var(--accent-primary) !important;
-    border: 1px solid var(--accent-primary);
+    border: none !important;
 }
 
 /* ── Notifications ── */
@@ -358,8 +356,6 @@
     background: var(--glass-border);
     border-radius: 10px;
 }
-
-
 
 .logo {
     display: flex;

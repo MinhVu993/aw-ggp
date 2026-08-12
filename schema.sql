@@ -89,6 +89,7 @@ CREATE TABLE goods_out_items (
   quantity NUMERIC(12, 3) NOT NULL CHECK (quantity > 0), -- Số lượng (數量)
   unit TEXT DEFAULT 'Cái',                -- Đơn vị tính (Cái, Bộ, Kg, Lô...)
   purpose TEXT NOT NULL,                  -- Mục đích (用途)
+  images JSONB DEFAULT '[]'::jsonb,       -- Danh sách URL ảnh đính kèm nhiều góc chụp
   
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );

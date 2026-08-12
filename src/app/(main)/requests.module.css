@@ -349,6 +349,16 @@
   background: var(--bg-primary);
 }
 
+.table td:last-child:focus-within,
+.table td:last-child:has([data-open="true"]) {
+  z-index: 1000 !important;
+}
+
+.table tr:has([data-open="true"]) {
+  position: relative;
+  z-index: 1000 !important;
+}
+
 .table th:last-child {
   background: var(--bg-secondary);
   z-index: 12;

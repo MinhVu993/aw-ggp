@@ -18,6 +18,8 @@ export async function POST(request: Request) {
     const query = `
       SELECT 
         r.*,
+        to_char(r.start_date, 'YYYY-MM-DD') as start_date_str,
+        to_char(r.end_date, 'YYYY-MM-DD') as end_date_str,
         (
           SELECT json_agg(
             json_build_object(
@@ -25,7 +27,8 @@ export async function POST(request: Request) {
               'name', i.item_name,
               'quantity', i.quantity,
               'unit', i.unit,
-              'purpose', i.purpose
+              'purpose', i.purpose,
+              'images', COALESCE(i.images, '[]'::jsonb)
             )
           )
           FROM goods_out_items i
@@ -55,12 +58,12 @@ export async function POST(request: Request) {
       applicantDept: row.applicant_dept,
       destination: row.destination,
       status: row.status, // 'APPROVED_WAITING_GATE', 'COMPLETED', etc.
-      startDate: row.start_date ? new Date(row.start_date).toISOString().split('T')[0] : '',
-      endDate: row.end_date ? new Date(row.end_date).toISOString().split('T')[0] : '',
+      startDate: row.start_date_str || (row.start_date ? String(row.start_date).split('T')[0] : ''),
+      endDate: row.end_date_str || (row.end_date ? String(row.end_date).split('T')[0] : ''),
       carrierEmpno: row.carrier_empno || '',
       carrierName: row.carrier_name || '',
       items: row.items || [],
-      qrExpiresAt: row.end_date ? new Date(row.end_date).toISOString() : new Date(Date.now() + 86400000).toISOString(),
+      qrExpiresAt: row.end_date_str ? `${row.end_date_str}T23:59:59Z` : (row.end_date ? new Date(row.end_date).toISOString() : new Date(Date.now() + 86400000).toISOString()),
       isQrUsed: row.status === 'COMPLETED' || row.is_qr_used === true
     };
 

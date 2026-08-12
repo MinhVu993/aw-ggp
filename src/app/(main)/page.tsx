@@ -25,7 +25,11 @@ import {
   Funnel,
   ArrowCounterClockwise,
   ListBullets,
-  Copy
+  Copy,
+  CaretLeft,
+  CaretRight,
+  CaretDoubleLeft,
+  CaretDoubleRight
 } from "@phosphor-icons/react";
 import { apiFetch } from "@/lib/apiFetch";
 import { toast } from "sonner";
@@ -89,13 +93,14 @@ function RequestsPageContent() {
   const [destination, setDestination] = useState("");
   
   // Date Range & Carrier
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
+  const getTodayStr = () => new Date().toISOString().split("T")[0];
+  const [startDate, setStartDate] = useState(getTodayStr());
+  const [endDate, setEndDate] = useState(getTodayStr());
   const [carrierEmpno, setCarrierEmpno] = useState("");
   const [carrierName, setCarrierName] = useState("");
 
   const [itemsList, setItemsList] = useState<GoodsOutItem[]>([
-    { name: "", quantity: "", unit: "", purpose: "" }
+    { name: "", quantity: "", unit: "", purpose: "", images: [] }
   ]);
   const [renewParentId, setRenewParentId] = useState<number | null>(null);
   const [editRequestId, setEditRequestId] = useState<number | null>(null);
@@ -343,19 +348,19 @@ function RequestsPageContent() {
   }, [empSearchQuery, internalUsers]);
 
   // Handle Item inputs
-  const handleItemFieldChange = (index: number, field: keyof GoodsOutItem, value: string) => {
+  const handleItemFieldChange = (index: number, field: keyof GoodsOutItem, value: any) => {
     const updated = [...itemsList];
     updated[index] = { ...updated[index], [field]: value };
     setItemsList(updated);
   };
 
   const addNewItemRow = () => {
-    setItemsList(prev => [...prev, { name: "", quantity: "", unit: "", purpose: "" }]);
+    setItemsList(prev => [...prev, { name: "", quantity: "", unit: "", purpose: "", images: [] }]);
   };
 
   const removeItemRow = (index: number) => {
     if (itemsList.length === 1) {
-      setItemsList([{ name: "", quantity: "", unit: "", purpose: "" }]);
+      setItemsList([{ name: "", quantity: "", unit: "", purpose: "", images: [] }]);
       return;
     }
     setItemsList(prev => prev.filter((_, i) => i !== index));
@@ -424,8 +429,8 @@ function RequestsPageContent() {
         setFormTitle("");
         setFormReason("");
         setDestination("");
-        setStartDate("");
-        setEndDate("");
+        setStartDate(getTodayStr());
+        setEndDate(getTodayStr());
         setCarrierEmpno("");
         setCarrierName("");
         setItemsList([{ name: "", quantity: "", unit: "", purpose: "" }]);
@@ -615,10 +620,11 @@ function RequestsPageContent() {
         name: i.name || "",
         quantity: i.quantity || "",
         unit: i.unit || "",
-        purpose: i.purpose || ""
+        purpose: i.purpose || "",
+        images: i.images || []
       })));
     } else {
-      setItemsList([{ name: "", quantity: "", unit: "", purpose: "" }]);
+      setItemsList([{ name: "", quantity: "", unit: "", purpose: "", images: [] }]);
     }
     
     // Close Details Drawer if open, Open Create Drawer
@@ -637,10 +643,11 @@ function RequestsPageContent() {
         name: i.name || "",
         quantity: i.quantity || "",
         unit: i.unit || "",
-        purpose: i.purpose || ""
+        purpose: i.purpose || "",
+        images: i.images || []
       })));
     } else {
-      setItemsList([{ name: "", quantity: "", unit: "", purpose: "" }]);
+      setItemsList([{ name: "", quantity: "", unit: "", purpose: "", images: [] }]);
     }
     
     // Close Details Drawer if open, Open Create Drawer
@@ -901,7 +908,18 @@ function RequestsPageContent() {
             <ArrowCounterClockwise size={14} weight="bold" />
             <span>{t("refresh")}</span>
           </button>
-          <button className={styles.btnPrimary} onClick={() => setShowCreateDrawer(true)}>
+          <button className={styles.btnPrimary} onClick={() => {
+            setEditRequestId(null);
+            setRenewParentId(null);
+            setDestination("");
+            setFormReason("");
+            setCarrierEmpno("");
+            setCarrierName("");
+            setStartDate(getTodayStr());
+            setEndDate(getTodayStr());
+            setItemsList([{ name: "", quantity: "", unit: "", purpose: "", images: [] }]);
+            setShowCreateDrawer(true);
+          }}>
             <Plus size={16} weight="bold" />
             <span>{t("create_request")}</span>
           </button>
@@ -914,7 +932,7 @@ function RequestsPageContent() {
           <table className={styles.table}>
             <thead>
               <tr>
-                <th style={{ width: "160px", whiteSpace: "nowrap" }} className={styles.filterableTh}>
+                <th style={{ width: "140px", minWidth: "135px", whiteSpace: "nowrap" }} className={styles.filterableTh}>
                   <div className={styles.thContent}>
                     <span>{t("request_code").toUpperCase()}</span>
                     <div className={styles.filterDropdownContainer}>
@@ -993,7 +1011,7 @@ function RequestsPageContent() {
                     </div>
                   </div>
                 </th>
-                <th style={{ width: "60px", whiteSpace: "nowrap" }} className={styles.filterableTh}>
+                <th style={{ width: "130px", minWidth: "125px", whiteSpace: "nowrap" }} className={styles.filterableTh}>
                   <div className={styles.thContent}>
                     <span>{t("date_range")?.toUpperCase() || "DATE RANGE"}</span>
                     <div className={styles.filterDropdownContainer}>
@@ -1072,8 +1090,8 @@ function RequestsPageContent() {
                     </div>
                   </div>
                 </th>
-                <th style={{ width: "50px", whiteSpace: "nowrap" }}>{t("request_date")?.toUpperCase() || "NGÀY TẠO"}</th>
-                <th style={{ width: "160px" }} className={styles.filterableTh}>
+                <th style={{ width: "105px", minWidth: "95px", whiteSpace: "nowrap" }}>{t("request_date")?.toUpperCase() || "NGÀY TẠO"}</th>
+                <th style={{ width: "170px", minWidth: "155px", whiteSpace: "nowrap" }} className={styles.filterableTh}>
                   <div className={styles.thContent}>
                     <span>{t("requester").toUpperCase()}</span>
                     <div className={styles.filterDropdownContainer}>
@@ -1152,8 +1170,8 @@ function RequestsPageContent() {
                     </div>
                   </div>
                 </th>
-                <th style={{ width: "180px" }}>{t("carrier_info")?.toUpperCase() || "NGƯỜI MANG HÀNG"}</th>
-                <th style={{ width: "180px" }} className={styles.filterableTh}>
+                <th style={{ width: "185px", minWidth: "170px", whiteSpace: "nowrap" }}>{t("carrier_info")?.toUpperCase() || "NGƯỜI MANG HÀNG"}</th>
+                <th style={{ width: "230px", minWidth: "190px", whiteSpace: "nowrap" }} className={styles.filterableTh}>
                   <div className={styles.thContent}>
                     <span>{t("items")?.toUpperCase() || "ITEMS"}</span>
                     <div className={styles.filterDropdownContainer}>
@@ -1232,7 +1250,7 @@ function RequestsPageContent() {
                     </div>
                   </div>
                 </th>
-                <th style={{ width: "180px" }} className={styles.filterableTh}>
+                <th style={{ width: "180px", minWidth: "150px", whiteSpace: "nowrap" }} className={styles.filterableTh}>
                   <div className={styles.thContent}>
                     <span>{t("destination")?.toUpperCase() || "DESTINATION"}</span>
                     <div className={styles.filterDropdownContainer}>
@@ -1311,7 +1329,7 @@ function RequestsPageContent() {
                     </div>
                   </div>
                 </th>
-                <th style={{ width: "135px", whiteSpace: "nowrap" }} className={styles.filterableTh}>
+                <th style={{ width: "145px", minWidth: "135px", whiteSpace: "nowrap" }} className={styles.filterableTh}>
                   <div className={styles.thContent}>
                     <span>{t("status").toUpperCase()}</span>
                     <div className={styles.filterDropdownContainer}>
@@ -1386,7 +1404,7 @@ function RequestsPageContent() {
                   </div>
                 </th>
                 <th style={{ width: "70px", textAlign: "center", whiteSpace: "nowrap" }}>{t("history").toUpperCase()}</th>
-                <th style={{ width: "80px", textAlign: "center", whiteSpace: "nowrap" }}>{t("col_action").toUpperCase()}</th>
+                <th style={{ width: "75px", textAlign: "center", whiteSpace: "nowrap" }}>{t("col_action").toUpperCase()}</th>
               </tr>
             </thead>
             <tbody>
@@ -1426,7 +1444,15 @@ function RequestsPageContent() {
                     </span>
                   </td>
                   <td>
-                    <div style={{ fontWeight: 600, color: "var(--text-primary)" }}>{item.startDate || item.requestDate} ➜ {item.endDate || item.requestDate}</div>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "2px", lineHeight: "1.25" }}>
+                      <span style={{ fontSize: "0.825rem", color: "var(--text-secondary)", fontWeight: 500 }}>
+                        {item.startDate || item.requestDate}
+                      </span>
+                      <span style={{ fontSize: "0.825rem", color: "var(--accent-primary)", fontWeight: 600, display: "flex", alignItems: "center", gap: "4px" }}>
+                        <span style={{ color: "var(--accent-primary)", fontSize: "0.85rem", lineHeight: 1 }}>↳</span>
+                        <span>{item.endDate || item.requestDate}</span>
+                      </span>
+                    </div>
                   </td>
                   <td>
                     <div style={{ fontSize: "0.85rem", color: "var(--text-primary)" }}>{item.requestDate}</div>
@@ -1748,40 +1774,171 @@ function RequestsPageContent() {
         </div>
       </div>
 
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "1rem", padding: "0 1rem", marginBottom: "1.5rem" }}>
-        <button 
-          className={styles.btnOutline} 
-          onClick={handleExportCSV} 
-          title={t("export_csv")} 
-          style={{ display: "flex", alignItems: "center", gap: "0.375rem" }}
-        >
-          <FileCsv size={14} weight="bold" />
-          <span>{t("export_csv")}</span>
-        </button>
+      {/* ── FOOTER & PAGINATION ──────────────── */}
+      <div style={{
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        flexWrap: "wrap",
+        gap: "1rem",
+        marginTop: "1.25rem",
+        padding: "0 0.5rem",
+        marginBottom: "2rem"
+      }}>
+        {/* Left side: Export CSV & Count Summary */}
+        <div style={{ display: "flex", alignItems: "center", gap: "1rem", flexWrap: "wrap" }}>
+          <button 
+            className={styles.btnOutline} 
+            onClick={handleExportCSV} 
+            title={t("export_csv")} 
+            style={{ display: "flex", alignItems: "center", gap: "0.375rem" }}
+          >
+            <FileCsv size={16} weight="bold" />
+            <span>{t("export_csv")}</span>
+          </button>
 
-        {totalPages > 1 && (
-          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-            <span style={{ fontSize: "0.875rem", color: "var(--text-secondary)", marginRight: "0.5rem" }}>
-              {t("page") || "Trang"} {currentPage} / {totalPages}
-            </span>
-            <button
-              className={styles.btnOutline}
-              style={{ padding: "0.25rem 0.5rem", minWidth: "32px" }}
-              disabled={currentPage === 1}
-              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+          <span style={{ fontSize: "0.8rem", color: "var(--text-secondary)" }}>
+            {filteredRequests.length > 0 ? (
+              <>
+                {language === "vi" 
+                  ? `Hiển thị ${(currentPage - 1) * pageSize + 1} - ${Math.min(currentPage * pageSize, filteredRequests.length)} trên tổng số ${filteredRequests.length} đơn`
+                  : language === "zh"
+                  ? `顯示 ${(currentPage - 1) * pageSize + 1} - ${Math.min(currentPage * pageSize, filteredRequests.length)} 共 ${filteredRequests.length} 筆`
+                  : `Showing ${(currentPage - 1) * pageSize + 1} to ${Math.min(currentPage * pageSize, filteredRequests.length)} of ${filteredRequests.length} entries`}
+              </>
+            ) : (
+              t("no_requests_found")
+            )}
+          </span>
+        </div>
+
+        {/* Right side: Page Size Selector & Interactive Page Buttons */}
+        <div style={{ display: "flex", alignItems: "center", gap: "1rem", flexWrap: "wrap" }}>
+          {/* Page size selector */}
+          <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", fontSize: "0.8rem", color: "var(--text-secondary)" }}>
+            <span>{t("show") || "Hiển thị"}:</span>
+            <select
+              value={pageSize}
+              onChange={(e) => {
+                setPageSize(Number(e.target.value));
+                setCurrentPage(1);
+              }}
+              style={{
+                background: "var(--bg-secondary)",
+                color: "var(--text-primary)",
+                border: "1px solid var(--glass-border)",
+                borderRadius: "4px",
+                padding: "0.25rem 0.5rem",
+                fontSize: "0.8rem",
+                outline: "none",
+                cursor: "pointer"
+              }}
             >
-              &lt;
-            </button>
-            <button
-              className={styles.btnOutline}
-              style={{ padding: "0.25rem 0.5rem", minWidth: "32px" }}
-              disabled={currentPage === totalPages}
-              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-            >
-              &gt;
-            </button>
+              <option value={10}>10 / {language === "vi" ? "trang" : language === "zh" ? "頁" : "page"}</option>
+              <option value={20}>20 / {language === "vi" ? "trang" : language === "zh" ? "頁" : "page"}</option>
+              <option value={50}>50 / {language === "vi" ? "trang" : language === "zh" ? "頁" : "page"}</option>
+              <option value={100}>100 / {language === "vi" ? "trang" : language === "zh" ? "頁" : "page"}</option>
+            </select>
           </div>
-        )}
+
+          {/* Navigation Controls */}
+          {totalPages > 0 && (
+            <div style={{ display: "flex", alignItems: "center", gap: "0.3rem" }}>
+              {/* First Page button */}
+              <button
+                className={styles.btnOutline}
+                style={{ padding: "0.3rem 0.5rem", minWidth: "30px", height: "30px", display: "flex", alignItems: "center", justifyContent: "center", opacity: currentPage === 1 ? 0.4 : 1 }}
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage(1)}
+                title={language === "vi" ? "Trang đầu" : "First page"}
+              >
+                <CaretDoubleLeft size={14} weight="bold" />
+              </button>
+
+              {/* Prev Page button */}
+              <button
+                className={styles.btnOutline}
+                style={{ padding: "0.3rem 0.5rem", minWidth: "30px", height: "30px", display: "flex", alignItems: "center", justifyContent: "center", opacity: currentPage === 1 ? 0.4 : 1 }}
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                title={language === "vi" ? "Trang trước" : "Previous page"}
+              >
+                <CaretLeft size={14} weight="bold" />
+              </button>
+
+              {/* Numbered Page Buttons with intelligent windowing */}
+              {(() => {
+                const pages: (number | string)[] = [];
+                const maxButtons = 5;
+                if (totalPages <= maxButtons) {
+                  for (let i = 1; i <= totalPages; i++) pages.push(i);
+                } else {
+                  if (currentPage <= 3) {
+                    pages.push(1, 2, 3, 4, "...", totalPages);
+                  } else if (currentPage >= totalPages - 2) {
+                    pages.push(1, "...", totalPages - 3, totalPages - 2, totalPages - 1, totalPages);
+                  } else {
+                    pages.push(1, "...", currentPage - 1, currentPage, currentPage + 1, "...", totalPages);
+                  }
+                }
+
+                return pages.map((p, idx) => {
+                  if (typeof p === "string") {
+                    return (
+                      <span key={`dots-${idx}`} style={{ padding: "0 0.3rem", color: "var(--text-secondary)", fontSize: "0.85rem" }}>
+                        ...
+                      </span>
+                    );
+                  }
+                  const isActive = p === currentPage;
+                  return (
+                    <button
+                      key={`page-${p}`}
+                      onClick={() => setCurrentPage(p)}
+                      style={{
+                        padding: "0.3rem 0.6rem",
+                        minWidth: "30px",
+                        height: "30px",
+                        borderRadius: "4px",
+                        fontSize: "0.8rem",
+                        fontWeight: isActive ? 700 : 500,
+                        border: isActive ? "1px solid var(--accent-primary)" : "1px solid var(--glass-border)",
+                        background: isActive ? "color-mix(in srgb, var(--accent-primary) 15%, transparent)" : "var(--bg-primary)",
+                        color: isActive ? "var(--accent-primary)" : "var(--text-primary)",
+                        cursor: "pointer",
+                        transition: "all 0.15s ease"
+                      }}
+                    >
+                      {p}
+                    </button>
+                  );
+                });
+              })()}
+
+              {/* Next Page button */}
+              <button
+                className={styles.btnOutline}
+                style={{ padding: "0.3rem 0.5rem", minWidth: "30px", height: "30px", display: "flex", alignItems: "center", justifyContent: "center", opacity: currentPage === totalPages ? 0.4 : 1 }}
+                disabled={currentPage === totalPages}
+                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                title={language === "vi" ? "Trang sau" : "Next page"}
+              >
+                <CaretRight size={14} weight="bold" />
+              </button>
+
+              {/* Last Page button */}
+              <button
+                className={styles.btnOutline}
+                style={{ padding: "0.3rem 0.5rem", minWidth: "30px", height: "30px", display: "flex", alignItems: "center", justifyContent: "center", opacity: currentPage === totalPages ? 0.4 : 1 }}
+                disabled={currentPage === totalPages}
+                onClick={() => setCurrentPage(totalPages)}
+                title={language === "vi" ? "Trang cuối" : "Last page"}
+              >
+                <CaretDoubleRight size={14} weight="bold" />
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* ── CREATE REQUEST SLIDE-OUT DRAWER ──────────────── */}

@@ -4,6 +4,7 @@ export interface GoodsOutItem {
   quantity: string;   // quantity (string for input, convert to number on submit)
   unit: string;       // unit
   purpose: string;    // purpose
+  images?: string[];  // URLs / base64 of attached photos
 }
 
 export interface RequestItem {
