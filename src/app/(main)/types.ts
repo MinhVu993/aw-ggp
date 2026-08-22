@@ -36,6 +36,7 @@ export interface RequestItem {
   parentId?: number;
   renewedToCode?: string;
   qrCode?: string;
+  qrCodeImage?: string;
 }
 
 export interface InternalUser {

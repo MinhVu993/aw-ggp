@@ -99,6 +99,7 @@ export async function POST(request: Request) {
     await client.query('ALTER TABLE goods_out_requests ADD COLUMN IF NOT EXISTS qr_code_token VARCHAR(255);');
     await client.query('ALTER TABLE goods_out_requests ADD COLUMN IF NOT EXISTS qr_generated_at TIMESTAMPTZ;');
     await client.query('ALTER TABLE goods_out_requests ADD COLUMN IF NOT EXISTS qr_expires_at TIMESTAMPTZ;');
+    await client.query('ALTER TABLE goods_out_requests ADD COLUMN IF NOT EXISTS qr_code_image TEXT;');
     await client.query('ALTER TABLE goods_out_requests ADD COLUMN IF NOT EXISTS resubmitted_at TIMESTAMPTZ;');
 
     if (body.action === 'return') {
@@ -113,6 +114,26 @@ export async function POST(request: Request) {
     } else if (approve) {
       if (newStatus === 'APPROVED_WAITING_GATE') {
         qrToken = randomUUID();
+        
+        let qrCodeValue = qrToken;
+        let qrCodeImage = null;
+        try {
+          const apiRes = await fetch('http://gmo021.cansportsvg.com:10001/api/barcodes/AW-GGP/generate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ payload: qrToken })
+          });
+          if (apiRes.ok) {
+            const data = await apiRes.json();
+            if (data.encoded_value) qrCodeValue = data.encoded_value;
+            if (data.image) qrCodeImage = data.image;
+          } else {
+            console.error('External API Error:', await apiRes.text());
+          }
+        } catch (e) {
+          console.error('Fetch to QR API failed:', e);
+        }
+
         // Calculate expiration (end of end_date, or 24 hours from now)
         const expQuery = await client.query('SELECT end_date FROM goods_out_requests WHERE request_id = $1', [requestId]);
         let expiresAt = null;
@@ -126,10 +147,10 @@ export async function POST(request: Request) {
 
         updateQuery = `
           UPDATE goods_out_requests 
-          SET status = $1, current_lvl = $2, qr_code = $3, qr_code_token = $4, qr_generated_at = NOW(), qr_expires_at = $5, current_step = $6 
+          SET status = $1, current_lvl = $2, qr_code = $3, qr_code_token = $4, qr_generated_at = NOW(), qr_expires_at = $5, current_step = $6, qr_code_image = $8
           WHERE request_id = $7 RETURNING *
         `;
-        params = [newStatus, nextLvl, qrToken, qrToken, expiresAt, nextStep, requestId];
+        params = [newStatus, nextLvl, qrCodeValue, qrToken, expiresAt, nextStep, requestId, qrCodeImage];
       } else {
         updateQuery = `UPDATE goods_out_requests SET status = $1, current_lvl = $2, current_step = $4 WHERE request_id = $3 RETURNING *`;
         params = [newStatus, nextLvl, requestId, nextStep];

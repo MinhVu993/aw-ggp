@@ -39,7 +39,7 @@ export default function HistoryModal({ request, onClose, t, language }: HistoryM
                 const step = req.flowSnapshot?.find((s: any) => s.lvl_code === log.lvlCode || s.lvl_code === log.stepName);
                 let lvlName = step ? (step.lvl_name?.[language] || step.lvl_name?.vi || step.lvl_name?.en || step.lvl_code) : (log.stepName || "Unknown");
                 
-                if (log.stepName === 'gate_check' || log.lvlCode === 'gate_check' || log.action === 'GATE_CHECK_PASSED') {
+                if (log.stepName === 'gate_check' || log.lvlCode === 'gate_check' || log.action === 'GATE_CHECK_PASSED' || log.action === 'GATE_CHECK_DENIED') {
                   lvlName = language === 'vi' ? 'Bảo vệ (Cổng)' : (language === 'zh' ? '警卫 (门禁)' : 'Security Guard');
                 }
 
@@ -57,6 +57,9 @@ export default function HistoryModal({ request, onClose, t, language }: HistoryM
                 } else if (log.action === "GATE_CHECK_PASSED") {
                   statusText = language === 'vi' ? 'ĐÃ QUA CỔNG' : (language === 'zh' ? '已过闸' : 'PASSED GATE');
                   statusColor = "#10b981";
+                } else if (log.action === "GATE_CHECK_DENIED") {
+                  statusText = language === 'vi' ? 'TỪ CHỐI CHO QUA' : (language === 'zh' ? '拒绝放行' : 'DENIED GATE');
+                  statusColor = "#ef4444";
                 }
 
                 rows.push({

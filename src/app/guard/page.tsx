@@ -37,10 +37,18 @@ export default function GuardPage() {
     setLoading(true);
 
     try {
+      const guardEmpno = user?.empno || user?.group_empno || "000000";
+      const guardName = user?.name || user?.full_name || "Bảo vệ trực ca";
+
       const res = await fetch("/api/guard/scan", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ qrToken: qrToken.trim() })
+        body: JSON.stringify({ 
+          qrToken: qrToken.trim(),
+          securityGuardEmpno: guardEmpno,
+          securityGuardName: guardName,
+          gateName: "Cổng Bảo Vệ"
+        })
       });
 
       const result = await res.json();

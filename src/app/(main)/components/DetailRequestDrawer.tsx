@@ -1,6 +1,6 @@
 import { useTranslation } from "@/context/LanguageContext";
 import React, { useState } from 'react';
-import { X, Check, MapPin, Package, Copy, Camera } from "@phosphor-icons/react";
+import { X, Check, MapPin, Package, Copy, Camera, WarningCircle, ShieldCheck } from "@phosphor-icons/react";
 import styles from "../requests.module.css";
 import { RequestItem } from "../types";
 import ImageCarouselModal from "@/components/ui/ImageCarouselModal";
@@ -243,6 +243,44 @@ export default function DetailRequestDrawer({
                     {request.status === 3 ? t("rejection_reason") : t("return_reason")} (bởi {lastLog.approverName || lastLog.approverEmpno})
                   </div>
                   <div style={{ fontSize: "0.9rem" }}>{lastLog.comment}</div>
+                </div>
+              );
+            })()
+          )}
+
+          {/* Gate Scan / Denied History Banner */}
+          {request.approvalLogs && (
+            (() => {
+              const lastGateLog = [...request.approvalLogs].reverse().find(l => l.action === 'GATE_CHECK_DENIED' || l.action === 'GATE_CHECK_PASSED');
+              if (!lastGateLog) return null;
+              const isDenied = lastGateLog.action === 'GATE_CHECK_DENIED';
+              return (
+                <div style={{
+                  background: isDenied ? "rgba(239, 68, 68, 0.12)" : "rgba(16, 185, 129, 0.12)",
+                  border: `1px solid ${isDenied ? "#ef4444" : "#10b981"}`,
+                  borderRadius: "6px",
+                  padding: "0.65rem 0.95rem",
+                  color: isDenied ? "#ef4444" : "#10b981",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  flexWrap: "wrap",
+                  gap: "0.5rem"
+                }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                    {isDenied ? <WarningCircle size={20} weight="bold" /> : <ShieldCheck size={20} weight="bold" />}
+                    <div>
+                      <div style={{ fontWeight: 800, fontSize: "0.85rem", textTransform: "uppercase" }}>
+                        {isDenied ? "CỔNG BẢO VỆ: TỪ CHỐI CHO QUA" : "CỔNG BẢO VỆ: ĐÃ XÁC NHẬN QUA CỔNG"}
+                      </div>
+                      <div style={{ fontSize: "0.8rem", opacity: 0.95 }}>
+                        {lastGateLog.note || lastGateLog.comment || (isDenied ? "Đơn đã hết hạn" : "Đã qua cổng")} (Bởi {lastGateLog.approverName || lastGateLog.approverEmpno})
+                      </div>
+                    </div>
+                  </div>
+                  <div style={{ fontSize: "0.75rem", opacity: 0.8, fontWeight: 600 }}>
+                    {lastGateLog.actedAt}
+                  </div>
                 </div>
               );
             })()

@@ -68,6 +68,7 @@ export async function POST(request: Request) {
       UPDATE goods_out_requests 
       SET 
         status = 'COMPLETED',
+        current_lvl = 'gate_check',
         is_qr_used = true,
         qr_used_at = NOW(),
         gate_name = $1,

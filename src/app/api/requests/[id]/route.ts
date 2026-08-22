@@ -110,7 +110,8 @@ export async function GET(
         currentLvlCode: row.current_lvl || (row.status === 'PENDING_DEPT' ? 'dept_manager' : 'ps_manager'), 
         flowSnapshot: row.flow_snapshot || [], 
         approvalLogs: row.approval_logs || [],
-        qrCode: row.qr_code
+        qrCode: row.qr_code,
+        qrCodeImage: row.qr_code_image
       };
 
       return NextResponse.json({ success: true, data: mappedData });
